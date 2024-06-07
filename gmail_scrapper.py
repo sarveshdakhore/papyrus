@@ -13,18 +13,22 @@ def is_valid(tag):
 urls = []
 for i in soup.find_all(class_= "devsite-nav-title gc-analytics-event"):
     if(i.has_attr("href")):
+        # print(i["href"])
         urls.append(i["href"])
 
-for i in urls[6:36]:
+urls.remove("/gmail/api/quickstart/java")
+urls.remove("/gmail/api/quickstart/apps-script")
+urls.remove("/gmail/api/quickstart/go")
+# print(urls[6:19])
+
+for i in urls[6:19]:
     url = "https://developers.google.com"+i
     sub_page = requests.get(url)
     sub_soup = BeautifulSoup(sub_page.content, "html.parser")
-    count = 6
+    print(url)
     for j in sub_soup.find_all("div",class_="devsite-article-body"):
-        print(6)
         try:
             with open("gmail_docs.txt", "a") as f:
                 f.write(j.text)
         except:
             pass
-        count += 1
