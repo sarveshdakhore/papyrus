@@ -10,6 +10,8 @@ from models import *
 from jose import jwt, JWTError
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
+from fastapi import Body
+from datetime import datetime, timedelta, timezone
 
 DATABASE_URL = "sqlite:///./papyrus.db"
 
@@ -92,6 +94,7 @@ def get_user_teams_in_company(username: str, company_id: int, db: Session):
 
 
 
+
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -99,12 +102,33 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, "YOUR_SECRET_KEY", algorithms=["HS256"])
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
         username: str = payload.get("sub")
+        exp: datetime = payload.get("exp")
         if username is None:
-            raise credentials_exception
-    except JWTError:
-        raise credentials_exception
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token: no username",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        if exp is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token: no expiration time",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        if datetime.now(timezone.utc).timestamp() > exp:
+          raise HTTPException(
+              status_code=status.HTTP_401_UNAUTHORIZED,
+              detail="Token has expired",
+              headers={"WWW-Authenticate": "Bearer"},
+          )
+    except JWTError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"JWT error: {str(e)}",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     return username
 
 @app.post("/login")
@@ -118,7 +142,11 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
       detail="Incorrect username or password",
       headers={"WWW-Authenticate": "Bearer"},
     )
-  token = jwt.encode({"sub": user.username}, SECRET_KEY, algorithm=ALGORITHM)
+
+  access_token_expires = timedelta(minutes=59)
+
+  to_encode = {"sub": user.username, "exp": datetime.now(timezone.utc) + access_token_expires}
+  token = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
   return {"access_token": token, "token_type": "bearer"}
 # {
 #   "username": "your_username",
@@ -132,7 +160,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
 # Authorization: Bearer your_jwt_token
 
 @app.post("/signup")
-def create_user(username: str, email: str, password: str):
+def create_user(username: str = Body(...), email: str = Body(...), password: str = Body(...)):
   db_user = get_user(username)
   if db_user:
     raise HTTPException(
@@ -160,6 +188,7 @@ def create_user(username: str, email: str, password: str):
 #   "password": "your_password"
 # }
 
+
 def get_metadata():
     return Base.metadata
 @app.get("/")
@@ -170,6 +199,7 @@ def get_data():
 
 @app.get("/user/{username}/companies")
 async def read_user_companies(username: str, db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
+  print(current_user, username)
   if current_user != username:
     raise HTTPException(status_code=403, detail="Unauthorized")
   companies = get_user_companies(username, db)

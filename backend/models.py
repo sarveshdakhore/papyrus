@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime
 from sqlalchemy.orm import relationship  # Import the relationship class
 from sqlalchemy.ext.declarative import declarative_base
 from werkzeug.security import generate_password_hash
@@ -43,3 +43,16 @@ class User_roles(Base):
   team = relationship("Team", back_populates="user_roles")
   user_id = Column(Integer, ForeignKey('users.id'))  
   user = relationship("User", back_populates="roles")
+  
+class Task(Base):
+  __tablename__ = 'tasks'
+  id = Column(Integer, primary_key=True, index=True)
+  title = Column(String, index=True)
+  deadline = Column(DateTime)
+  content = Column(String)
+  completed = Column(Boolean, default=False)
+  started = Column(Boolean, default=False)
+  assigned_to = Column(Integer, ForeignKey('users.id'))
+  assigned_from = Column(Integer, ForeignKey('users.id'))
+  team_id = Column(Integer, ForeignKey('teams.id'))
+  team = relationship("Team", back_populates="tasks")
