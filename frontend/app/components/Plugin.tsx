@@ -10,8 +10,6 @@ const Plugin = () => {
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`,
-        "Accept": "*/*",
-        "User-Agent": "Thunder Client (https://www.thunderclient.com)",
       },
       redirect: "manual",
     });
