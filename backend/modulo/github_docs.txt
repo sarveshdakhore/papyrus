@@ -1,0 +1,1714 @@
+Introduction
+This article describes how to use the GitHub REST API with GitHub CLI, curl, or JavaScript. For a quickstart guide, see "Quickstart for GitHub REST API."
+About requests to the REST API
+This section describes the elements that make up an API request:
+
+HTTP method
+Path
+Headers
+Media types
+Authentication
+Parameters
+
+Every request to the REST API includes an HTTP method and a path. Depending on the REST API endpoint, you might also need to specify request headers, authentication information, query parameters, or body parameters.
+The REST API reference documentation describes the HTTP method, path, and parameters for every endpoint. It also displays example requests and responses for each endpoint. For more information, see the REST reference documentation.
+HTTP method
+The HTTP method of an endpoint defines the type of action it performs on a given resource. Some common HTTP methods are GET, POST, DELETE, and PATCH. The REST API reference documentation provides the HTTP method for every endpoint.
+For example, the HTTP method for the "List repository issues" endpoint is GET."
+Where possible, the GitHub REST API strives to use an appropriate HTTP method for each action.
+
+GET: Used for retrieving resources.
+POST: Used for creating resources.
+PATCH: Used for updating properties of resources.
+PUT: Used for replacing resources or collections of resources.
+DELETE: Used for deleting resources.
+
+Path
+Each endpoint has a path. The REST API reference documentation gives the path for every endpoint. For example, the path for the "List repository issues" endpoint is /repos/{owner}/{repo}/issues.
+The curly brackets {} in a path denote path parameters that you need to specify. Path parameters modify the endpoint path and are required in your request. For example, the path parameters for the "List repository issues" endpoint are {owner} and {repo}. To use this path in your API request, replace {repo} with the name of the repository where you would like to request a list of issues, and replace {owner} with the name of the account that owns the repository.
+Headers
+Headers provide extra information about the request and the desired response. Following are some examples of headers that you can use in your requests to the GitHub REST API. For an example of a request that uses headers, see "Making a request."
+Accept
+Most GitHub REST API endpoints specify that you should pass an Accept header with a value of application/vnd.github+json. The value of the Accept header is a media type. For more information about media types, see "Media types."
+X-GitHub-Api-Version
+You should use this header to specify a version of the REST API to use for your request. For more information, see "API Versions."
+User-Agent
+All API requests must include a valid User-Agent header. The User-Agent header identifies the user or application that is making the request.
+
+By default, GitHub CLI sends a valid User-Agent header. However,  GitHub recommends using your GitHub username, or the name of your application, for the User-Agent header value. This allows GitHub to contact you if there are problems.
+
+
+By default, curl sends a valid User-Agent header. However GitHub recommends using your GitHub username, or the name of your application, for the User-Agent header value. This allows GitHub to contact you if there are problems.
+
+
+If you use the Octokit.js SDK, the SDK will send a valid User-Agent header for you. However, GitHub recommends using your GitHub username, or the name of your application, for the User-Agent header value. This allows GitHub to contact you if there are problems.
+
+The following is an example User-Agent for an app named Awesome-Octocat-App:
+User-Agent: Awesome-Octocat-App
+
+Requests with no User-Agent header will be rejected. If you provide an invalid User-Agent header, you will receive a 403 Forbidden response.
+
+Media types
+You can specify one or more media types by adding them to the Accept header of your request. For more information about the Accept header, see "Accept."
+Media types specify the format of the data you want to consume from the API. Media types are specific to resources, allowing them to change independently and support formats that other resources don't. The documentation for each GitHub REST API endpoint will describe the media types that it supports. For more information, see the "GitHub REST API documentation."
+The most common media types supported by the GitHub REST API are application/vnd.github+json and application/json.
+There are custom media types that you can use with some endpoints. For example, the REST API to manage commits and pull requests support the media types diff, patch, and sha. The media types full, raw, text, or html are used by some other endpoints.
+All custom media types for GitHub look like this: application/vnd.github.PARAM+json, where PARAM is the name of the media type. For example, to specify the raw media type, you would use application/vnd.github.raw+json.
+For an example of a request that uses media types, see "Making a request."
+Authentication
+Many endpoints require authentication or return additional information if you are authenticated. Additionally, you can make more requests per hour when you are authenticated.
+
+To authenticate your request, you will need to provide an authentication token with the required scopes or permissions. There a few different ways to get a token: You can create a personal access token, generate a token with a GitHub App, or use the built-in GITHUB_TOKEN in a GitHub Actions workflow. For more information, see "Authenticating to the REST API."
+For an example of a request that uses an authentication token, see "Making a request."
+
+Note: If you don't want to create a token, you can use GitHub CLI. GitHub CLI will take care of authentication for you, and help keep your account secure. For more information, see the GitHub CLI version of this page.
+
+
+Warning: Treat your access token the same way you would treat your passwords or other sensitive credentials. For more information, see "Keeping your API credentials secure."
+
+
+
+Although some REST API endpoints are accessible without authentication, GitHub CLI requires you to authenticate before you can use the api subcommand to make an API request. Use the auth login subcommand to authenticate to GitHub. For more information, see "Making a request."
+
+
+To authenticate your request, you will need to provide an authentication token with the required scopes or permissions. There a few different ways to get a token: You can create a personal access token, generate a token with a GitHub App, or use the built-in GITHUB_TOKEN in a GitHub Actions workflow. For more information, see "Authenticating to the REST API."
+For an example of a request that uses an authentication token, see "Making a request."
+
+Warning: Treat your access token the same way you would treat your passwords or other sensitive credentials. For more information, see "Keeping your API credentials secure."
+
+
+Parameters
+Many API methods require or allow you to send additional information in parameters in your request. There are a few different types of parameters: Path parameters, body parameters, and query parameters.
+Path parameters
+Path parameters modify the endpoint path. These parameters are required in your request. For more information, see "Path."
+Body parameters
+Body parameters allow you to pass additional data to the API. These parameters can be optional or required, depending on the endpoint. For example, a body parameter may allow you to specify an issue title when creating a new issue, or specify certain settings when enabling or disabling a feature. The documentation for each GitHub REST API endpoint will describe the body parameters that it supports. For more information, see the "GitHub REST API documentation."
+For example, the "Create an issue" endpoint requires that you specify a title for the new issue in your request. It also allows you to optionally specify other information, such as text to put in the issue body, users to assign to the new issue, or labels to apply to the new issue. For an example of a request that uses body parameters, see "Making a request."
+You must authenticate your request to pass body parameters. For more information, see "Authenticating."
+Query parameters
+Query parameters allow you to control what data is returned for a request. These parameters are usually optional. The documentation for each GitHub REST API endpoint will describe any query parameters that it supports. For more information, see the "GitHub REST API documentation."
+For example, the "List public events" endpoint returns thirty issues by default. You can use the per_page query parameter to return two issues instead of 30. You can use the page query parameter to fetch only the first page of results. For an example of a request that uses query parameters, see "Making a request."
+Making a request
+
+This section demonstrates how to make an authenticated request to the GitHub REST API using GitHub CLI.
+1. Setup
+Install GitHub CLI on macOS, Windows, or Linux. For more information, see Installation in the GitHub CLI repository.
+2. Authenticate
+
+
+Authenticate with GitHub by running this command from your terminal.
+Shellgh auth login
+gh auth login
+
+You can use the --scopes option to specify what scopes you want. If you want to authenticate with a token that you created, you can use the --with-token option. For more information, see the GitHub CLI auth login documentation.
+
+
+Follow the on-screen prompts.
+GitHub CLI automatically stores your Git credentials for you when you choose HTTPS as your preferred protocol for Git operations and answer "yes" to the prompt asking if you would like to authenticate to Git with your GitHub credentials. This can be useful as it allows you to use Git commands like git push and git pull without needing to set up a separate credential manager or use SSH.
+
+
+3. Choose an endpoint for your request
+
+
+Choose an endpoint to make a request to. You can explore GitHub's REST API documentation to discover endpoints that you can use to interact with GitHub.
+
+
+Identify the HTTP method and path of the endpoint. You will send these with your request. For more information, see "HTTP method" and "Path."
+For example, the "Create an issue" endpoint uses the HTTP method POST and the path /repos/{owner}/{repo}/issues.
+
+
+Identify any required path parameters. Required path parameters appear in curly brackets {} in the path of the endpoint. Replace each parameter placeholder with the desired value. For more information, see "Path."
+For example, the "Create an issue" endpoint uses the path /repos/{owner}/{repo}/issues, and the path parameters are {owner} and {repo}. To use this path in your API request, replace {repo} with the name of the repository where you would like to create a new issue, and replace {owner} with the name of the account that owns the repository.
+
+
+4. Make a request with GitHub CLI
+Use the GitHub CLI api subcommand to make your API request. For more information, see the GitHub CLI api documentation.
+In your request, specify the following options and values:
+
+
+--method followed by the HTTP method and the path of the endpoint. For more information, see "HTTP method" and "Path."
+
+
+--header:
+
+Accept: Pass the media type in an Accept header. To pass multiple media types in an Accept header, separate the media types with a comma: Accept: application/vnd.github+json,application/vnd.github.diff. For more information, see "Accept" and "Media types."
+X-GitHub-Api-Version: Pass the API version in a X-GitHub-Api-Version header. For more information, see "X-GitHub-Api-Version."
+
+
+
+-f or -F followed by any body parameters or query parameters in key=value format. Use the -F option to pass a parameter that is a number, Boolean, or null. Use the -f option to pass string parameters.
+Some endpoints use query parameters that are arrays. To send an array in the query string, use the query parameter once per array item, and append [] after the query parameter name. For example, to provide an array of two repository IDs, use -f repository_ids[]=REPOSITORY_A_ID -f repository_ids[]=REPOSITORY_B_ID.
+If you do not need to specify any body parameters or query parameters in your request, omit this option. For more information, see "Body parameters" and "Query parameters." For examples, see "Example request using body parameters" and "Example request using query parameters."
+
+
+Example request
+The following example request uses the "Get Octocat" endpoint to return the octocat as ASCII art.
+Shellgh api --method GET /octocat \
+--header 'Accept: application/vnd.github+json' \
+--header "X-GitHub-Api-Version: 2022-11-28"
+gh api --method GET /octocat \
+--header 'Accept: application/vnd.github+json' \
+--header "X-GitHub-Api-Version: 2022-11-28"
+
+Example request using query parameters
+The "List public events" endpoint returns thirty issues by default. The following example uses the per_page query parameter to return two issues instead of 30, and the page query parameter to fetch only the first page of results.
+Shellgh api --method GET /events -F per_page=2 -F page=1
+--header 'Accept: application/vnd.github+json' \
+gh api --method GET /events -F per_page=2 -F page=1
+--header 'Accept: application/vnd.github+json' \
+
+Example request using body parameters
+The following example uses the "Create an issue" endpoint to create a new issue in the octocat/Spoon-Knife repository. In the response, find the html_url of your issue, and navigate to your issue in the browser.
+Shellgh api --method POST /repos/octocat/Spoon-Knife/issues \
+--header "Accept: application/vnd.github+json" \
+--header "X-GitHub-Api-Version: 2022-11-28" \
+-f title='Created with the REST API' \
+-f body='This is a test issue created by the REST API' \
+gh api --method POST /repos/octocat/Spoon-Knife/issues \
+--header "Accept: application/vnd.github+json" \
+--header "X-GitHub-Api-Version: 2022-11-28" \
+-f title='Created with the REST API' \
+-f body='This is a test issue created by the REST API' \
+
+
+
+This section demonstrates how to make an authenticated request to the GitHub REST API using curl.
+1. Setup
+You must have curl installed on your machine. To check if curl is already installed, run curl --version on the command line.
+
+If the output provides information about the version of curl, that means curl is installed.
+If you get a message similar to command not found: curl, that means curl is not installed. Download and install curl. For more information, see the curl download page.
+
+2. Choose an endpoint for your request
+
+
+Choose an endpoint to make a request to. You can explore GitHub's REST API documentation to discover endpoints that you can use to interact with GitHub.
+
+
+Identify the HTTP method and path of the endpoint. You will send these with your request. For more information, see "HTTP method" and "Path."
+For example, the "Create an issue" endpoint uses the HTTP method POST and the path /repos/{owner}/{repo}/issues.
+
+
+Identify any required path parameters. Required path parameters appear in curly brackets {} in the path of the endpoint. Replace each parameter placeholder with the desired value. For more information, see "Path."
+For example, the "Create an issue" endpoint uses the path /repos/{owner}/{repo}/issues, and the path parameters are {owner} and {repo}. To use this path in your API request, replace {repo} with the name of the repository where you would like to create a new issue, and replace {owner} with the name of the account that owns the repository.
+
+
+3. Create authentication credentials
+Create an access token to authenticate your request. You can save your token and use it for multiple requests. Give the token any scopes or permissions that are required to access the endpoint. You will send this token in an Authorization header with your request. For more information, see "Authentication."
+4. Make a curl request
+Use the curl command to make your request. For more information, see the curl documentation.
+Specify the following options and values in your request:
+
+
+--request or -X followed by the HTTP method as the value. For more information, see "HTTP method."
+
+
+--url followed by the full path as the value. The full path is a URL that includes the base URL for the GitHub REST API (https://api.github.com) and the path of the endpoint, like this: https://api.github.com/PATH. Replace PATH with the path of the endpoint. For more information, see "Path."
+To use query parameters, add a ? to the end of the path, then append your query parameter name and value in the form parameter_name=value. Separate multiple query parameters with &. If you need to send an array in the query string, use the query parameter once per array item, and append [] after the query parameter name. For example, to provide an array of two repository IDs, use ?repository_ids[]=REPOSITORY_A_ID&repository_ids[]=REPOSITORY_B_ID. For more information, see "Query parameters." For an example, see "Example request using query parameters."
+
+
+--header or -H:
+
+Accept: Pass the media type in an Accept header. To pass multiple media types in an Accept header, separate the media types with a comma, for example: Accept: application/vnd.github+json,application/vnd.github.diff. For more information, see "Accept" and "Media types."
+X-GitHub-Api-Version: Pass the API version in a X-GitHub-Api-Version header. For more information, see "X-GitHub-Api-Version."
+Authorization: Pass your authentication token in an Authorization header. Note that in most cases you can use Authorization: Bearer or Authorization: token to pass a token. However, if you are passing a JSON web token (JWT), you must use Authorization: Bearer. For more information, see "Authentication." For an example of a request that uses an Authorization header, see "Example request using body parameters."
+
+
+
+--data or -d followed by any body parameters within a JSON object. If you do not need to specify any body parameters in your request, omit this option. For more information, see "Body parameters." For an example, see "Example request using body parameters."
+
+
+Example request
+The following example request uses the "Get Octocat" endpoint to return the octocat as ASCII art.
+Shellcurl --request GET \
+--url "https://api.github.com/octocat" \
+--header "Accept: application/vnd.github+json" \
+--header "X-GitHub-Api-Version: 2022-11-28"
+curl --request GET \
+--url "https://api.github.com/octocat" \
+--header "Accept: application/vnd.github+json" \
+--header "X-GitHub-Api-Version: 2022-11-28"
+
+Example request using query parameters
+The "List public events" endpoint returns thirty issues by default. The following example uses the per_page query parameter to return two issues instead of 30, and the page query parameter to fetch only the first page of results.
+Shellcurl --request GET \
+--url "https://api.github.com/events?per_page=2&page=1" \
+--header "Accept: application/vnd.github+json" \
+--header "X-GitHub-Api-Version: 2022-11-28" \
+  https://api.github.com/events
+curl --request GET \
+--url "https://api.github.com/events?per_page=2&page=1" \
+--header "Accept: application/vnd.github+json" \
+--header "X-GitHub-Api-Version: 2022-11-28" \
+  https://api.github.com/events
+
+Example request using body parameters
+The following example uses the "Create an issue" endpoint to create a new issue in the octocat/Spoon-Knife repository. Replace YOUR-TOKEN with the authentication token you created in a previous step.
+
+Note: If you are using a fine-grained personal access token, you must replace octocat/Spoon-Knife with a repository that you own or that is owned by an organization that you are a member of. Your token must have access to that repository and have read and write permissions for repository issues. For more information, see "Managing your personal access tokens."
+
+Shellcurl \
+--request POST \
+--url "https://api.github.com/repos/octocat/Spoon-Knife/issues" \
+--header "Accept: application/vnd.github+json" \
+--header "X-GitHub-Api-Version: 2022-11-28" \
+--header "Authorization: Bearer YOUR-TOKEN" \
+--data '{
+  "title": "Created with the REST API",
+  "body": "This is a test issue created by the REST API"
+}'
+curl \
+--request POST \
+--url "https://api.github.com/repos/octocat/Spoon-Knife/issues" \
+--header "Accept: application/vnd.github+json" \
+--header "X-GitHub-Api-Version: 2022-11-28" \
+--header "Authorization: Bearer YOUR-TOKEN" \
+--data '{
+  "title": "Created with the REST API",
+  "body": "This is a test issue created by the REST API"
+}'
+
+
+
+This section demonstrates how to make a request to the GitHub REST API using JavaScript and Octokit.js. For a more detailed guide, see "Scripting with the REST API and JavaScript."
+1. Setup
+You must install octokit to use the Octokit.js library shown in the following examples.
+
+Install octokit. For example, npm install octokit. For other ways to install or load octokit, see the Octokit.js README.
+
+2. Choose an endpoint for your request
+
+
+Choose an endpoint to make a request to. You can explore GitHub's REST API documentation to discover endpoints that you can use to interact with GitHub.
+
+
+Identify the HTTP method and path of the endpoint. You will send these with your request. For more information, see "HTTP method" and "Path."
+For example, the "Create an issue" endpoint uses the HTTP method POST and the path /repos/{owner}/{repo}/issues.
+
+
+Identify any required path parameters. Required path parameters appear in curly brackets {} in the path of the endpoint. Replace each parameter placeholder with the desired value. For more information, see "Path."
+For example, the "Create an issue" endpoint uses the path /repos/{owner}/{repo}/issues, and the path parameters are {owner} and {repo}. To use this path in your API request, replace {repo} with the name of the repository where you would like to create a new issue, and replace {owner} with the name of the account that owns the repository.
+
+
+3. Create an access token
+Create an access token to authenticate your request. You can save your token and use it for multiple requests. Give the token any scopes or permissions that are required to access the endpoint. You will send this token in an Authorization header with your request. For more information, see "Authentication."
+4. Make a request with Octokit.js
+
+
+Import octokit in your script. For example, import { Octokit } from "octokit";. For other ways to import octokit, see the Octokit.js README.
+
+
+Create an instance of Octokit with your token. Replace YOUR-TOKEN with your token.
+JavaScriptconst octokit = new Octokit({ 
+  auth: 'YOUR-TOKEN'
+});
+const octokit = new Octokit({ 
+  auth: 'YOUR-TOKEN'
+});
+
+
+
+Use octokit.request to execute your request.
+
+Send the HTTP method and path as the first argument to the request method. For more information, see "HTTP method" and "Path."
+Specify all path, query, and body parameters in an object as the second argument to the request method. For more information, see "Parameters."
+
+In the following example request, the HTTP method is POST, the path is /repos/{owner}/{repo}/issues, the path parameters are owner: "octocat" and repo: "Spoon-Knife", and the body parameters are title: "Created with the REST API" and body: "This is a test issue created by the REST API".
+
+Note: If you are using a fine-grained personal access token, you must replace octocat/Spoon-Knife with a repository that you own or that is owned by an organization that you are a member of. Your token must have access to that repository and have read and write permissions for repository issues. For more information, see "Managing your personal access tokens."
+
+JavaScriptawait octokit.request("POST /repos/{owner}/{repo}/issues", {
+  owner: "octocat",
+  repo: "Spoon-Knife",
+  title: "Created with the REST API",
+  body: "This is a test issue created by the REST API",
+});
+await octokit.request("POST /repos/{owner}/{repo}/issues", {
+  owner: "octocat",
+  repo: "Spoon-Knife",
+  title: "Created with the REST API",
+  body: "This is a test issue created by the REST API",
+});
+
+The request method automatically passes the Accept: application/vnd.github+json header. To pass additional headers or a different Accept header, add a headers property to the object that is passed as a second argument. The value of the headers property is an object with the header names as keys and header values as values.
+For example, the following code will send a content-type header with a value of text/plain and a X-GitHub-Api-Version header with a value of 2022-11-28.
+JavaScriptawait octokit.request("GET /octocat", {
+  headers: {
+    "content-type": "text/plain",
+    "X-GitHub-Api-Version": "2022-11-28",
+  },
+});
+await octokit.request("GET /octocat", {
+  headers: {
+    "content-type": "text/plain",
+    "X-GitHub-Api-Version": "2022-11-28",
+  },
+});
+
+
+
+
+Using the response
+After you make a request, the API will return the response status code, response headers, and potentially a response body.
+About the response code and headers
+Every request will return an HTTP status code that indicates the success of the response. For more information about response codes, see the MDN HTTP response status code documentation.
+Additionally, the response will include headers that give more details about the response. Headers that start with X- or x- are custom to GitHub. For example, the x-ratelimit-remaining and x-ratelimit-reset headers tell you how many requests you can make in a time period.
+
+To view the status code and headers, use the --include or --i option when you send your request.
+For example, this request gets a list of issues in the octocat/Spoon-Knife repository:
+gh api \
+--header 'Accept: application/vnd.github+json' \
+--method GET /repos/octocat/Spoon-Knife/issues \
+-F per_page=2 --include
+
+And it returns a response code and headers that look something like this:
+HTTP/2.0 200 OK
+Access-Control-Allow-Origin: *
+Access-Control-Expose-Headers: ETag, Link, Location, Retry-After, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Used, X-RateLimit-Resource, X-RateLimit-Reset, X-OAuth-Scopes, X-Accepted-OAuth-Scopes, X-Poll-Interval, X-GitHub-Media-Type, X-GitHub-SSO, X-GitHub-Request-Id, Deprecation, Sunset
+Cache-Control: private, max-age=60, s-maxage=60
+Content-Security-Policy: default-src 'none'
+Content-Type: application/json; charset=utf-8
+Date: Thu, 04 Aug 2022 19:56:41 GMT
+Etag: W/"a63dfbcfdb73621e9d2e89551edcf9856731ced534bd7f1e114a5da1f5f73418"
+Link: <https://api.github.com/repositories/1300192/issues?per_page=1&page=2>; rel="next", <https://api.github.com/repositories/1300192/issues?per_page=1&page=14817>; rel="last"
+Referrer-Policy: origin-when-cross-origin, strict-origin-when-cross-origin
+Server: GitHub.com
+Strict-Transport-Security: max-age=31536000; includeSubdomains; preload
+Vary: Accept, Authorization, Cookie, Accept-Encoding, Accept, X-Requested-With
+X-Accepted-Oauth-Scopes: repo
+X-Content-Type-Options: nosniff
+X-Frame-Options: deny
+X-Github-Api-Version-Selected: 2022-08-09
+X-Github-Media-Type: github.v3; format=json
+X-Github-Request-Id: 1C73:26D4:E2E500:1EF78F4:62EC2479
+X-Oauth-Client-Id: 178c6fc778ccc68e1d6a
+X-Oauth-Scopes: gist, read:org, repo, workflow
+X-Ratelimit-Limit: 15000
+X-Ratelimit-Remaining: 14996
+X-Ratelimit-Reset: 1659645499
+X-Ratelimit-Resource: core
+X-Ratelimit-Used: 4
+X-Xss-Protection: 0
+
+In this example, the response code is 200, which indicates a successful request.
+
+
+When you make a request with Octokit.js, the request method returns a promise. If the request was successful, the promise resolves to an object that includes the HTTP status code of the response (status) and the response headers (headers). If an error occurs, the promise resolves to an object that includes the HTTP status code of the response (status) and the response headers (response.headers).
+You can use a try/catch block to catch an error if it occurs. For example, if the request in the following script is successful, the script will log the status code and the value of the x-ratelimit-remaining header. If the request was not successful, the script will log the status code, the value of the x-ratelimit-remaining header, and the error message.
+In the following example, replace REPO-OWNER with the name of the account that owns the repository, and REPO-NAME with the name of the repository.
+JavaScripttry {
+  const result = await octokit.request("GET /repos/{owner}/{repo}/issues", {
+    owner: "REPO-OWNER",
+    repo: "REPO-NAME",
+    per_page: 2,
+  });
+
+  console.log(`Success! Status: ${result.status}. Rate limit remaining: ${result.headers["x-ratelimit-remaining"]}`)
+
+} catch (error) {
+  console.log(`Error! Status: ${error.status}. Rate limit remaining: ${error.headers["x-ratelimit-remaining"]}. Message: ${error.response.data.message}`)
+}
+try {
+  const result = await octokit.request("GET /repos/{owner}/{repo}/issues", {
+    owner: "REPO-OWNER",
+    repo: "REPO-NAME",
+    per_page: 2,
+  });
+
+  console.log(`Success! Status: ${result.status}. Rate limit remaining: ${result.headers["x-ratelimit-remaining"]}`)
+
+} catch (error) {
+  console.log(`Error! Status: ${error.status}. Rate limit remaining: ${error.headers["x-ratelimit-remaining"]}. Message: ${error.response.data.message}`)
+}
+
+
+
+To view the status code and headers, use the --include or --i option when you send your request.
+For example, this request gets a list of issues in the octocat/Spoon-Knife repository:
+curl --request GET \
+--url "https://api.github.com/repos/octocat/Spoon-Knife/issues?per_page=2" \
+--header "Accept: application/vnd.github+json" \
+--header "Authorization: Bearer YOUR-TOKEN" \
+--include
+
+And it returns a response code and headers that look something like this:
+HTTP/2 200
+server: GitHub.com
+date: Thu, 04 Aug 2022 20:07:51 GMT
+content-type: application/json; charset=utf-8
+cache-control: public, max-age=60, s-maxage=60
+vary: Accept, Accept-Encoding, Accept, X-Requested-With
+etag: W/"7fceb7e8c958d3ec4d02524b042578dcc7b282192e6c939070f4a70390962e18"
+x-github-media-type: github.v3; format=json
+link: <https://api.github.com/repositories/1300192/issues?per_page=2&sort=updated&direction=asc&page=2>; rel="next", <https://api.github.com/repositories/1300192/issues?per_page=2&sort=updated&direction=asc&page=7409>; rel="last"
+access-control-expose-headers: ETag, Link, Location, Retry-After, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Used, X-RateLimit-Resource, X-RateLimit-Reset, X-OAuth-Scopes, X-Accepted-OAuth-Scopes, X-Poll-Interval, X-GitHub-Media-Type, X-GitHub-SSO, X-GitHub-Request-Id, Deprecation, Sunset
+access-control-allow-origin: *
+strict-transport-security: max-age=31536000; includeSubdomains; preload
+x-frame-options: deny
+x-content-type-options: nosniff
+x-xss-protection: 0
+referrer-policy: origin-when-cross-origin, strict-origin-when-cross-origin
+content-security-policy: default-src 'none'
+x-ratelimit-limit: 15000
+x-ratelimit-remaining: 14996
+x-ratelimit-reset: 1659645535
+x-ratelimit-resource: core
+x-ratelimit-used: 4
+accept-ranges: bytes
+content-length: 4936
+x-github-request-id: 14E0:4BC6:F1B8BA:208E317:62EC2715
+
+In this example, the response code is 200, which indicates a successful request.
+
+About the response body
+Many endpoints will return a response body. Unless otherwise specified, the response body is in JSON format. Blank fields are included as null instead of being omitted. All timestamps return in UTC time, ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ.
+Unlike the GraphQL API where you specify what information you want, the REST API typically returns more information than you need. If desired, you can parse the response to pull out specific pieces of information.
+
+For example, you can use > to redirect the response to a file. In the following example, replace REPO-OWNER with the name of the account that owns the repository, and REPO-NAME with the name of the repository.
+Shellgh api \
+--header 'Accept: application/vnd.github+json' \
+--method GET /repos/REPO-OWNER/REPO-NAME/issues \
+-F per_page=2 > data.json
+gh api \
+--header 'Accept: application/vnd.github+json' \
+--method GET /repos/REPO-OWNER/REPO-NAME/issues \
+-F per_page=2 > data.json
+
+Then you can use jq to get the title and author ID of each issue:
+Shelljq '.[] | {title: .title, authorID: .user.id}' data.json
+jq '.[] | {title: .title, authorID: .user.id}' data.json
+
+The previous two commands return something like:
+{
+  "title": "Update index.html",
+  "authorID": 10701255
+}
+{
+  "title": "Edit index file",
+  "authorID": 53709285
+}
+
+For more information about jq, see the jq documentation.
+
+
+For example, you can get the title and author ID of each issue. In the following example, replace REPO-OWNER with the name of the account that owns the repository, and REPO-NAME with the name of the repository.
+JavaScripttry {
+  const result = await octokit.request("GET /repos/{owner}/{repo}/issues", {
+    owner: "REPO-OWNER",
+    repo: "REPO-NAME",
+    per_page: 2,
+  });
+
+  const titleAndAuthor = result.data.map(issue => {title: issue.title, authorID: issue.user.id})
+
+  console.log(titleAndAuthor)
+
+} catch (error) {
+  console.log(`Error! Status: ${error.status}. Message: ${error.response.data.message}`)
+}
+try {
+  const result = await octokit.request("GET /repos/{owner}/{repo}/issues", {
+    owner: "REPO-OWNER",
+    repo: "REPO-NAME",
+    per_page: 2,
+  });
+
+  const titleAndAuthor = result.data.map(issue => {title: issue.title, authorID: issue.user.id})
+
+  console.log(titleAndAuthor)
+
+} catch (error) {
+  console.log(`Error! Status: ${error.status}. Message: ${error.response.data.message}`)
+}
+
+
+
+For example, you can use > to redirect the response to a file. In the following example, replace REPO-OWNER with the name of the account that owns the repository, and REPO-NAME with the name of the repository.
+Shellcurl --request GET \
+--url "https://api.github.com/repos/REPO-OWNER/REPO-NAME/issues?per_page=2" \
+--header "Accept: application/vnd.github+json" \
+--header "Authorization: Bearer YOUR-TOKEN" > data.json
+curl --request GET \
+--url "https://api.github.com/repos/REPO-OWNER/REPO-NAME/issues?per_page=2" \
+--header "Accept: application/vnd.github+json" \
+--header "Authorization: Bearer YOUR-TOKEN" > data.json
+
+Then you can use jq to get the title and author ID of each issue:
+Shelljq '.[] | {title: .title, authorID: .user.id}' data.json
+jq '.[] | {title: .title, authorID: .user.id}' data.json
+
+The previous two commands return something like:
+{
+  "title": "Update index.html",
+  "authorID": 10701255
+}
+{
+  "title": "Edit index file",
+  "authorID": 53709285
+}
+
+For more information about jq, see the jq documentation.
+
+Detailed versus summary representations
+A response can include all attributes for a resource or only a subset of attributes, depending on whether you fetch an individual resource or a list of resources.
+
+When you fetch an individual resource, like a specific repository, the response will typically include all attributes for that resource. This is the "detailed" representation of the resource.
+When you fetch a list of resources, like a list of multiple repositories, the response will only include a subset of the attributes for each resource. This is the "summary" representation of the resource.
+
+Note that authorization sometimes influences the amount of detail included in a representation.
+The reason for this is because some attributes are computationally expensive for the API to provide, so GitHub excludes those attributes from the summary representation. To obtain those attributes, you can fetch the detailed representation.
+The documentation provides an example response for each API method. The example response illustrates all attributes that are returned by that method.
+Hypermedia
+All resources may have one or more *_url properties linking to other resources. These are meant to provide explicit URLs so that proper API clients don't need to construct URLs on their own.  It is highly recommended that API clients use these. Doing so will make future upgrades of the API easier for developers. All URLs are expected to be proper RFC 6570 URI templates.
+You can then expand these templates using something like the uri_template gem:
+>> tmpl = URITemplate.new('/notifications{?since,all,participating}')
+>> tmpl.expand
+=> "/notifications"
+
+>> tmpl.expand all: 1
+=> "/notifications?all=1"
+
+>> tmpl.expand all: 1, participating: 1
+=> "/notifications?all=1&participating=1"
+
+Next steps
+This article demonstrated how to list and create issues in a repository. For more practice, try to comment on an issue, edit the title of an issue, or close an issue. For more information, see the "Create an issue comment" endpoint and the "Update an issue" endpoint.
+For more information about other endpoints that you can use, see the REST reference documentation.About primary rate limits
+GitHub limits the number of REST API requests that you can make within a specific amount of time. This limit helps prevent abuse and denial-of-service attacks, and ensures that the API remains available for all users.
+Some endpoints, like the search endpoints, have more restrictive limits. For more information about these endpoints, see "REST API endpoints for rate limits." The GraphQL API also has a separate primary rate limit. For more information, see "Rate limits and node limits for the GraphQL API."
+In general, you can calculate your primary rate limit for the REST API based on your method of authentication, as described below.
+Primary rate limit for unauthenticated users
+You can make unauthenticated requests if you are only fetching public data. Unauthenticated requests are associated with the originating IP address, not with the user or application that made the request.
+The primary rate limit for unauthenticated requests is 60 requests per hour.
+Primary rate limit for authenticated users
+You can use a personal access token to make API requests. Additionally, you can authorize a GitHub App or OAuth app, which can then make API requests on your behalf.
+All of these requests count towards your personal rate limit of 5,000 requests per hour. Requests made on your behalf by a GitHub App that is owned by a GitHub Enterprise Cloud organization have a higher rate limit of 15,000 requests per hour. Similarly, requests made on your behalf by a OAuth app that is owned or approved by a GitHub Enterprise Cloud organization have a higher rate limit of 15,000 requests per hour if you are a member of the GitHub Enterprise Cloud organization.
+Primary rate limit for GitHub App installations
+GitHub Apps authenticating with an installation access token use the installation's minimum rate limit of 5,000 requests per hour. If the installation is on a GitHub Enterprise Cloud organization, the installation has a rate limit of 15,000 requests per hour.
+For installations that are not on a GitHub Enterprise Cloud organization, the rate limit for the installation will scale with the number of users and repositories. Installations that have more than 20 repositories receive another 50 requests per hour for each repository. Installations that are on an organization that have more than 20 users receive another 50 requests per hour for each user. The rate limit cannot increase beyond 12,500 requests per hour.
+Primary rate limits for GitHub App user access tokens (as opposed to installation access tokens) are dictated by the primary rate limits for the authenticated user. This rate limit is combined with any requests that another GitHub App or OAuth app makes on that user's behalf and any requests that the user makes with a personal access token. For more information, see "Primary rate limit for authenticated users."
+Primary rate limit for OAuth apps
+Primary rate limits for OAuth access tokens generated by a OAuth app are dictated by the primary rate limits for authenticated users. This rate limit is combined with any requests that another GitHub App or OAuth app makes on that user's behalf and any requests that the user makes with a personal access token. For more information, see "Primary rate limit for authenticated users."
+OAuth apps can also use their client ID and client secret to fetch public data. For example:
+curl -u YOUR_CLIENT_ID:YOUR_CLIENT_SECRET -I https://api.github.com/meta
+
+For these requests, the rate limit is 5,000 requests per hour per OAuth app. If the app is owned by a GitHub Enterprise Cloud organization, the rate limit is 15,000 requests per hour.
+
+Note: Never include your app's client secret in client-side code or in code that runs on a user device. The client secret can be used to generate OAuth access tokens for users who have authorized your app, so you should always keep the client secret secure.
+
+Primary rate limit for GITHUB_TOKEN in GitHub Actions
+You can use the built-in GITHUB_TOKEN to authenticate requests in GitHub Actions workflows. For more information, see "Automatic token authentication."
+The rate limit for GITHUB_TOKEN is 1,000 requests per hour per repository. For requests to resources that belong to a GitHub Enterprise Cloud account, the limit is 15,000 requests per hour per repository.
+About secondary rate limits
+In addition to primary rate limits, GitHub enforces secondary rate limits in order to prevent abuse and keep the API available for all users.
+You may encounter a secondary rate limit if you:
+
+Make too many concurrent requests. No more than 100 concurrent requests are allowed. This limit is shared across the REST API and GraphQL API.
+Make too many requests to a single endpoint per minute. No more than 900 points per minute are allowed for REST API endpoints, and no more than 2,000 points per minute are allowed for the GraphQL API endpoint. For more information about points, see "Calculating points for the secondary rate limit."
+Make too many requests per minute. No more than 90 seconds of CPU time per 60 seconds of real time is allowed. No more than 60 seconds of this CPU time may be for the GraphQL API. You can roughly estimate the CPU time by measuring the total response time for your API requests.
+Create too much content on GitHub in a short amount of time. In general, no more than 80 content-generating requests per minute and no more than 500 content-generating requests per hour are allowed. Some endpoints have lower content creation limits. Content creation limits include actions taken on the GitHub web interface as well as via the REST API and GraphQL API.
+
+These secondary rate limits are subject to change without notice. You may also encounter a secondary rate limit for undisclosed reasons.
+Calculating points for the secondary rate limit
+Some secondary rate limits are determined by the point values of requests. For GraphQL requests, these point values are separate from the point value calculations for the primary rate limit.
+RequestPointsGraphQL requests without mutations1GraphQL requests with mutations5Most REST API GET, HEAD, and OPTIONS requests1Most REST API POST, PATCH, PUT, or DELETE  requests5
+Some REST API endpoints have a different point cost that is not shared publicly.
+Checking the status of your rate limit
+You can use the headers that are sent with each response to determine the current status of your primary rate limit.
+Header nameDescriptionx-ratelimit-limitThe maximum number of requests that you can make per hourx-ratelimit-remainingThe number of requests remaining in the current rate limit windowx-ratelimit-usedThe number of requests you have made in the current rate limit windowx-ratelimit-resetThe time at which the current rate limit window resets, in UTC epoch secondsx-ratelimit-resourceThe rate limit resource that the request counted against. For more information about the different resources, see "REST API endpoints for rate limits."
+You can also call the GET /rate_limit endpoint to check your rate limit. Calling this endpoint does not count against your primary rate limit, but it can count against your secondary rate limit. For more information, see "REST API endpoints for rate limits." When possible, you should use the rate limit response headers instead of calling the API to check your rate limit.
+There is not a way to check the status of your secondary rate limit.
+Exceeding the rate limit
+If you exceed your primary rate limit, you will receive a 403 or 429 response, and the x-ratelimit-remaining header will be 0. You should not retry your request until after the time specified by the x-ratelimit-reset header.
+If you exceed a secondary rate limit, you will receive a 403 or 429 response and an error message that indicates that you exceeded a secondary rate limit. If the retry-after response header is present, you should not retry your request until after that many seconds has elapsed. If the x-ratelimit-remaining header is 0, you should not retry your request until after the time, in UTC epoch seconds, specified by the x-ratelimit-reset header. Otherwise, wait for at least one minute before retrying. If your request continues to fail due to a secondary rate limit, wait for an exponentially increasing amount of time between retries, and throw an error after a specific number of retries.
+Continuing to make requests while you are rate limited may result in the banning of your integration.
+Staying under the rate limit
+You should follow best practices to help you stay under the rate limits. For more information, see "Best practices for using the REST API."
+Getting a higher rate limit
+If you want a higher primary rate limit, consider making authenticated requests instead of unauthenticated requests. Authenticated requests have a significantly higher rate limit than unauthenticated requests.
+If you are using a personal access token for automation in your organization, consider whether a GitHub App will work instead. The rate limit for GitHub Apps using an installation access token scales with the number of repositories and number of organization users. For more information, see "About creating GitHub Apps."
+If you are using GitHub Apps or OAuth apps, consider upgrading to GitHub Enterprise Cloud. GitHub Apps or OAuth apps have higher rate limits for organizations that use GitHub Enterprise Cloud.About pagination
+When a response from the REST API would include many results, GitHub will paginate the results and return a subset of the results. For example, GET /repos/octocat/Spoon-Knife/issues will only return 30 issues from the octocat/Spoon-Knife repository even though the repository includes over 1600 open issues. This makes the response easier to handle for servers and for people.
+You can use the link header from the response to request additional pages of data. If an endpoint supports the per_page query parameter, you can control how many results are returned on a page.
+This article demonstrates how to request additional pages of results for paginated responses, how to change the number of results returned on each page, and how to write a script to fetch multiple pages of results.
+Using link headers
+When a response is paginated, the response headers will include a link header. If the endpoint does not support pagination, or if all results fit on a single page, the link header will be omitted.
+The link header contains URLs that you can use to fetch additional pages of results. For example, the previous, next, first, and last page of results.
+To see the response headers for a particular endpoint, you can use curl, GitHub CLI, or a library you're using to make requests. To see the response headers if you are using a library to make requests, follow the documentation for that library. To see the response headers if you are using curl or GitHub CLI, pass the --include flag with your request. For example:
+curl --include --request GET \
+--url "https://api.github.com/repos/octocat/Spoon-Knife/issues" \
+--header "Accept: application/vnd.github+json"
+
+If the response is paginated, the link header will look something like this:
+link: <https://api.github.com/repositories/1300192/issues?page=2>; rel="prev", <https://api.github.com/repositories/1300192/issues?page=4>; rel="next", <https://api.github.com/repositories/1300192/issues?page=515>; rel="last", <https://api.github.com/repositories/1300192/issues?page=1>; rel="first"
+
+The link header provides the URL for the previous, next, first, and last page of results:
+
+The URL for the previous page is followed by rel="prev".
+The URL for the next page is followed by rel="next".
+The URL for the last page is followed by rel="last".
+The URL for the first page is followed by rel="first".
+
+In some cases, only a subset of these links are available. For example, the link to the previous page won't be included if you are on the first page of results, and the link to the last page won't be included if it can't be calculated.
+You can use the URLs from the link header to request another page of results. For example, to request the last page of results based on the previous example:
+curl --include --request GET \
+--url "https://api.github.com/repositories/1300192/issues?page=515" \
+--header "Accept: application/vnd.github+json"
+
+The URLs in the link header use query parameters to indicate which page of results to return. The query parameters in the link URLs may differ between endpoints, however each paginated endpoint will use the page, before/after, or since query parameters. (Some endpoints use the since parameter for something other than pagination.) In all cases, you can use the URLs in the link header to fetch additional pages of results. For more information about query parameters see "Getting started with the REST API."
+Changing the number of items per page
+If an endpoint supports the per_page query parameter, then you can control how many results are returned on a page. For more information about query parameters see "Getting started with the REST API."
+For example, this request uses the per_page query parameter to return two items per page:
+curl --include --request GET \
+--url "https://api.github.com/repos/octocat/Spoon-Knife/issues?per_page=2" \
+--header "Accept: application/vnd.github+json"
+
+The per_page parameter will automatically be included in the link header. For example:
+link: <https://api.github.com/repositories/1300192/issues?per_page=2&page=2>; rel="next", <https://api.github.com/repositories/1300192/issues?per_page=2&page=7715>; rel="last"
+
+Scripting with pagination
+Instead of manually copying URLs from the link header, you can write a script to fetch multiple pages of results.
+The following examples use JavaScript and GitHub's Octokit.js library. For more information about Octokit.js, see "Getting started with the REST API" and the Octokit.js README.
+Example using the Octokit.js pagination method
+To fetch paginated results with Octokit.js, you can use octokit.paginate(). octokit.paginate() will fetch the next page of results until it reaches the last page and then return all of the results as a single array. A few endpoints return paginated results as array in an object, as opposed to returning the paginated results as an array. octokit.paginate() always returns an array of items even if the raw result was an object.
+For example, this script gets all of the issues from the octocat/Spoon-Knife repository. Although it requests 100 issues at a time, the function won't return until the last page of data is reached.
+JavaScriptimport { Octokit } from "octokit";
+
+const octokit = new Octokit({ });
+
+const data = await octokit.paginate("GET /repos/{owner}/{repo}/issues", {
+  owner: "octocat",
+  repo: "Spoon-Knife",
+  per_page: 100,
+  headers: {
+    "X-GitHub-Api-Version": "2022-11-28",
+  },
+});
+
+console.log(data)
+import { Octokit } from "octokit";
+
+const octokit = new Octokit({ });
+
+const data = await octokit.paginate("GET /repos/{owner}/{repo}/issues", {
+  owner: "octocat",
+  repo: "Spoon-Knife",
+  per_page: 100,
+  headers: {
+    "X-GitHub-Api-Version": "2022-11-28",
+  },
+});
+
+console.log(data)
+
+You can pass an optional map function to octokit.paginate() to end pagination before the last page is reached or to reduce memory usage by keeping only a subset of the response. You can also use octokit.paginate.iterator() to iterate through a single page at a time instead of requesting every page. For more information, see the Octokit.js documentation.
+Example creating a pagination method
+If you are using another language or library that doesn't have a pagination method, you can build your own pagination method. This example still uses the Octokit.js library to make requests, but does not rely on octokit.paginate().
+The getPaginatedData function makes a request to an endpoint with octokit.request(). The data from the response is processed by parseData, which handles cases where no data is returned or cases where the data that is returned is an object instead of an array. The processed data is then appended to a list that contains all of the paginated data collected so far. If the response includes a link header and if the link header includes a link for the next page, then the function uses a RegEx pattern (nextPattern) to get the URL for the next page. The function then repeats the previous steps, now using this new URL. Once the link header no longer includes a link to the next page, all of the results are returned.
+JavaScriptimport { Octokit } from "octokit";
+
+const octokit = new Octokit({ });
+
+async function getPaginatedData(url) {
+  const nextPattern = /(?<=<)([\S]*)(?=>; rel="Next")/i;
+  let pagesRemaining = true;
+  let data = [];
+
+  while (pagesRemaining) {
+    const response = await octokit.request(`GET ${url}`, {
+      per_page: 100,
+      headers: {
+        "X-GitHub-Api-Version":
+          "2022-11-28",
+      },
+    });
+
+    const parsedData = parseData(response.data)
+    data = [...data, ...parsedData];
+
+    const linkHeader = response.headers.link;
+
+    pagesRemaining = linkHeader && linkHeader.includes(`rel=\"next\"`);
+
+    if (pagesRemaining) {
+      url = linkHeader.match(nextPattern)[0];
+    }
+  }
+
+  return data;
+}
+
+function parseData(data) {
+  // If the data is an array, return that
+    if (Array.isArray(data)) {
+      return data
+    }
+
+  // Some endpoints respond with 204 No Content instead of empty array
+  //   when there is no data. In that case, return an empty array.
+  if (!data) {
+    return []
+  }
+
+  // Otherwise, the array of items that we want is in an object
+  // Delete keys that don't include the array of items
+  delete data.incomplete_results;
+  delete data.repository_selection;
+  delete data.total_count;
+  // Pull out the array of items
+  const namespaceKey = Object.keys(data)[0];
+  data = data[namespaceKey];
+
+  return data;
+}
+
+const data = await getPaginatedData("/repos/octocat/Spoon-Knife/issues");
+
+console.log(data);
+import { Octokit } from "octokit";
+
+const octokit = new Octokit({ });
+
+async function getPaginatedData(url) {
+  const nextPattern = /(?<=<)([\S]*)(?=>; rel="Next")/i;
+  let pagesRemaining = true;
+  let data = [];
+
+  while (pagesRemaining) {
+    const response = await octokit.request(`GET ${url}`, {
+      per_page: 100,
+      headers: {
+        "X-GitHub-Api-Version":
+          "2022-11-28",
+      },
+    });
+
+    const parsedData = parseData(response.data)
+    data = [...data, ...parsedData];
+
+    const linkHeader = response.headers.link;
+
+    pagesRemaining = linkHeader && linkHeader.includes(`rel=\"next\"`);
+
+    if (pagesRemaining) {
+      url = linkHeader.match(nextPattern)[0];
+    }
+  }
+
+  return data;
+}
+
+function parseData(data) {
+  // If the data is an array, return that
+    if (Array.isArray(data)) {
+      return data
+    }
+
+  // Some endpoints respond with 204 No Content instead of empty array
+  //   when there is no data. In that case, return an empty array.
+  if (!data) {
+    return []
+  }
+
+  // Otherwise, the array of items that we want is in an object
+  // Delete keys that don't include the array of items
+  delete data.incomplete_results;
+  delete data.repository_selection;
+  delete data.total_count;
+  // Pull out the array of items
+  const namespaceKey = Object.keys(data)[0];
+  data = data[namespaceKey];
+
+  return data;
+}
+
+const data = await getPaginatedData("/repos/octocat/Spoon-Knife/issues");
+
+console.log(data);
+About libraries
+You can use libraries to extend and simplify the way your application interacts with GitHub's API. Each library provides pre-built code for a specific programming language. After integrating a library into your project, you can use the pre-built code modules to interact with GitHub's API via a specific programming language.
+GitHub maintains official Octokit libraries for some languages. There are also third-party libraries that you can use with GitHub's API, which are not maintained by GitHub.
+Official GitHub libraries
+GitHub maintains these official client libraries for the GitHub API. These repositories are open source, and community contributions are welcome.
+For more information, see "Scripting with the REST API and JavaScript" and "Scripting with the REST API and Ruby."
+
+JavaScript: octokit.js
+Ruby: octokit.rb
+.NET: octokit.net
+Terraform: terraform-provider-github
+
+Third-party libraries
+The following are examples of third-party libraries that you can use to interact with the GitHub API in various programming languages.
+These third-party libraries are not maintained by GitHub. Libraries provided by third parties are governed by separate terms of service, privacy policy, and support documentation.
+Clojure
+
+Tentacles: clj-commons/tentacles
+
+Dart
+
+github.dart: SpinlockLabs/github.dart
+
+Emacs Lisp
+
+gh.el: sigma/gh.el
+
+Go
+
+go-github: google/go-github
+
+Haskell
+
+haskell-github: haskell-github/github
+
+Java
+
+GitHub API for Java, an object oriented representation of the GitHub API: org.kohsuke.github (From github-api)
+JCabi GitHub API, based on Java7 JSON API (JSR-353), simplifies tests with a runtime GitHub stub, and covers the entire API: github.jcabi.com (Personal Website)
+
+JavaScript
+
+NodeJS GitHub library: pksunkara/octonode
+Github.js wrapper around the GitHub API: github-tools/github
+Promise-Based CoffeeScript library for the Browser or NodeJS: philschatz/github-client
+
+Julia
+
+GitHub.jl: JuliaWeb/GitHub.jl
+
+OCaml
+
+ocaml-github: mirage/ocaml-github
+
+Perl
+
+Pithub: plu/Pithub
+Net::GitHub: fayland/perl-net-github
+
+PHP
+
+PHP GitHub API: KnpLabs/php-github-api
+GitHub Joomla! Package: joomla-framework/github-api
+GitHub bridge for Laravel: GrahamCampbell/Laravel-GitHub
+
+PowerShell
+
+PowerShellForGitHub: microsoft/PowerShellForGitHub
+
+Python
+
+gidgethub: gidgethub/gidgethub
+ghapi: fastai/ghapi
+PyGithub: PyGithub/PyGithub
+libsaas: duckboard/libsaas
+github3.py: sigmavirus24/github3.py
+agithub: mozilla/agithub
+github-flask: github-flask (Official Website)
+githubkit: yanyongyu/githubkit
+octokit.py: khornberg/octokit.py
+
+Ruby
+
+GitHub API Gem: piotrmurach/github
+
+Rust
+
+Octocrab: XAMPPRocky/octocrab
+Octocat: octocat-rs/octocat-rs
+
+Scala
+
+Github4s: 47deg/github4s
+
+Shell
+
+ok.sh: whiteinge/ok.sh
+Avoid polling
+You should subscribe to webhook events instead of polling the API for data. This will help your integration stay within the API rate limit. For more information, see "Webhooks documentation."
+Make authenticated requests
+Authenticated requests have a higher primary rate limit than unauthenticated requests. To avoid exceeding the rate limit, you should make authenticated requests. For more information, see "Rate limits for the REST API."
+Avoid concurrent requests
+To avoid exceeding secondary rate limits, you should make requests serially instead of concurrently. To achieve this, you can implement a queue system for requests.
+Pause between mutative requests
+If you are making a large number of POST, PATCH, PUT, or DELETE requests, wait at least one second between each request. This will help you avoid secondary rate limits.
+Handle rate limit errors appropriately
+If you receive a rate limit error, you should stop making requests temporarily according to these guidelines:
+
+If the retry-after response header is present, you should not retry your request until after that many seconds has elapsed.
+If the x-ratelimit-remaining header is 0, you should not make another request until after the time specified by the x-ratelimit-reset header. The x-ratelimit-reset header is in UTC epoch seconds.
+Otherwise, wait for at least one minute before retrying. If your request continues to fail due to a secondary rate limit, wait for an exponentially increasing amount of time between retries, and throw an error after a specific number of retries.
+
+Continuing to make requests while you are rate limited may result in the banning of your integration.
+Follow redirects
+The GitHub REST API uses HTTP redirection where appropriate. You should assume that any
+request may result in a redirection. Receiving an HTTP redirection is not an error, and you should follow the redirect.
+A 301 status code indicates permanent redirection. You should repeat your request to the URL specified by the location header. Additionally, you should update your code to use this URL for future requests.
+A 302 or 307 status code indicates temporary redirection. You should repeat your request to the URL specified by the location header. However, you should not update your code to use this URL for future requests.
+Other redirection status codes may be used in accordance with HTTP specifications.
+Do not manually parse URLs
+Many API endpoints return URL values for fields in the response body. You should not try to parse these URLs or to predict the structure of future URLs. This can cause your integration to break if GitHub changes the structure of the URL in the future. Instead, you should look for a field that contains the information that you need. For example, the endpoint to create an issue returns an html_url field with a value like https://github.com/octocat/Hello-World/issues/1347 and a number field with a value like 1347. If you need to know the number of the issue, use the number field instead of parsing the html_url field.
+Similarly, you should not try to manually construct pagination queries. Instead, you should use the link headers to determine what pages of results you can request. For more information, see "Using pagination in the REST API."
+Use conditional requests if appropriate
+Most endpoints return an etag header, and many endpoints return a last-modified header. You can use the values of these headers to make conditional requests. If the response has not changed, you will receive a 304 Not Modified response. Making a conditional request does not count against your primary rate limit if a 304 response is returned.
+For example, if a previous request returned an etag header value of 644b5b0155e6404a9cc4bd9d8b1ae730, you can use the if-none-match header in a future request:
+curl https://api.github.com/meta --include --header 'if-none-match: "644b5b0155e6404a9cc4bd9d8b1ae730"'
+
+For example, if a previous request returned a last-modified header value of Wed, 25 Oct 2023 19:17:59 GMT, you can use the if-modified-since header in a future request:
+curl https://api.github.com/repos/github/docs --include --header 'if-modified-since: Wed, 25 Oct 2023 19:17:59 GMT'
+
+Do not ignore errors
+You should not ignore repeated 4xx and 5xx error codes. Instead, you should ensure that you are correctly interacting with the API. For example, if an endpoint requests a string and you are passing it a numeric value, you will receive a validation error. Similarly, attempting to access an unauthorized or nonexistent endpoint will result in a 4xx error.
+Intentionally ignoring repeated validation errors may result in the suspension of your app for abuse.
+Further reading
+
+"Best practices for using webhooks"
+"Best practices for creating a GitHub App"
+Rate limit errors
+GitHub enforces rate limits to ensure that the API stays available for all users. For more information, see "Rate limits for the REST API."
+If you exceed your primary rate limit, you will receive a 403 Forbidden or 429 Too Many Requests  response, and the x-ratelimit-remaining header will be 0. If you exceed a secondary rate limit, you will receive a 403 Forbidden or 429 Too Many Requests  response and an error message that indicates that you exceeded a secondary rate limit.
+If you receive a rate limit error, you should stop making requests temporarily according to these guidelines:
+
+If the retry-after response header is present, you should not retry your request until after that many seconds has elapsed.
+If the x-ratelimit-remaining header is 0, you should not make another request until after the time specified by the x-ratelimit-reset header. The x-ratelimit-reset header is in UTC epoch seconds.
+Otherwise, wait for at least one minute before retrying. If your request continues to fail due to a secondary rate limit, wait for an exponentially increasing amount of time between retries, and throw an error after a specific number of retries.
+
+Continuing to make requests while you are rate limited may result in the banning of your integration.
+For more information about how to avoid exceeding the rate limits, see "Best practices for using the REST API."
+404 Not Found for an existing resource
+If you make a request to access a private resource and your request isn't properly authenticated, you will receive a 404 Not Found response. GitHub uses a 404 Not Found response instead of a 403 Forbidden response to avoid confirming the existence of private repositories.
+If you get a 404 Not Found response when you know that the resource that you are requesting exists, you should check your authentication. For example:
+
+If you are using a personal access token (classic), you should ensure that:
+
+The token has the scopes that are required to use the endpoint. For more information, see "Scopes for OAuth apps" and "Managing your personal access tokens."
+The owner of the token has any permissions that are required to use the endpoint. For example, if an endpoint can only be used by organization owners, only users that are owners of the affected organization can use the endpoint.
+The token has not been expired or revoked. For more information, see "Token expiration and revocation."
+
+
+If you are using a fine-grained personal access token, you should ensure that:
+
+The token has the permissions that are required to use the endpoint. For more information about the required permissions, see the documentation for the endpoint.
+The resource owner that was specified for the token matches the owner of the resource that the endpoint will affect. For more information, see "Managing your personal access tokens."
+The token has access to any private repositories that the endpoint will affect. For more information, see "Managing your personal access tokens."
+The owner of the token has any permissions that are required to use the endpoint. For example, if an endpoint can only be used by organization owners, only users that are owners of the affected organization can use the endpoint.
+The token has not been expired or revoked. For more information, see "Token expiration and revocation."
+
+
+If you are using a GitHub App installation access token, you should ensure that:
+
+The GitHub App has the permissions that are required to use the endpoint. For more information about the required permissions, see the documentation for the endpoint.
+The endpoint is only affecting resources owned by the account where the GitHub App is installed.
+The GitHub App has access to any repositories that the endpoint will affect.
+The token has not been expired or revoked. For more information, see "Token expiration and revocation."
+
+
+If you are using a GitHub App user access token, you should ensure that:
+
+The GitHub App has the permissions that are required to use the endpoint. For more information about the required permissions, see the documentation for the endpoint.
+The user that authorized the token has any permissions that are required to use the endpoint. For example, if an endpoint can only be used by organization owners, only users that are owners of the affected organization can use the endpoint.
+The GitHub App has access to any repositories that the endpoint will affect.
+The user has access to any repositories that the endpoint will affect.
+The user has approved any updated permissions for your GitHub App. For more information, see "Approving updated permissions for a GitHub App."
+
+
+If you are using an OAuth app user access token, you should ensure that:
+
+The token has the scopes that are required to use the endpoint. For more information, see "Scopes for OAuth apps."
+The user that authorized the token has any permissions that are required to use the endpoint. For example, if an endpoint can only be used by organization owners, only users that are owners of the affected organization can use the endpoint.
+The organization has not blocked OAuth app access, if you are using an endpoint that will affect resources owned by an organization. App owners cannot see whether their app is blocked, but they can instruct users of the app to check this. For more information, see "About OAuth app access restrictions."
+The token has not been expired or revoked. For more information, see "Token expiration and revocation."
+
+
+If you are using GITHUB_TOKEN in a GitHub Actions workflow, you should ensure that:
+
+The endpoint is only affecting resources owned by the repository where the workflow is running. If you need to access resources outside of that repository, such as resources owned by an organization or resources owned by another repository, you should use a personal access token or an access token for a GitHub App.
+
+
+
+For more information about authentication, see "Authenticating to the REST API."
+You should also check for typos in your URL. For example, adding a trailing slash to the endpoint will result in a 404 Not Found. You can refer to the reference documentation for the endpoint to confirm that you have the correct URL.
+Additionally, any path parameters must be URL encoded. For example, any slashes in the parameter value must be replaced with %2F. If you don't properly encode any slashes in the parameter name, the endpoint URL will be misinterpreted.
+Missing results
+Most endpoints that return a list of resources support pagination. For most of these endpoints, only the first 30 resources are returned by default. In order to see all of the resources, you need to paginate through the results. For more information, see "Using pagination in the REST API."
+If you are using pagination correctly and still do not see all of the results that you expect, you should confirm that the authentication credentials that you used have access to all of the expected resources. For example, if you are using a GitHub App installation access token, if the installation was only granted access to a subset of repositories in an organization, any request for all repositories in that organization will return only the repositories that the app installation can access.
+Requires authentication when using basic authentication
+Basic authentication with your username and password is not supported. Instead, you should use a personal access token or an access token for a GitHub App or OAuth app. For more information, see "Authenticating to the REST API."
+Timeouts
+If GitHub takes more than 10 seconds to process an API request, GitHub will terminate the request and you will receive a timeout response and a "Server Error" message.
+GitHub reserves the right to change the timeout window to protect the speed and reliability of the API.
+You can check the status of the REST API at githubstatus.com to determine whether the timeout is due to a problem with the API. You can also try to simplify your request or try your request later. For example, if you are requesting 100 items on a page, you can try requesting fewer items.
+Resource not accessible
+If you are using a GitHub App or fine-grained personal access token and you receive a "Resource not accessible by integration" or "Resource not accessible by personal access token" error, then your token has insufficient permissions. For more information about the required permissions, see the documentation for the endpoint.
+You can use the X-Accepted-GitHub-Permissions header to identify the permissions that are required to access the REST API endpoint.
+The value of the X-Accepted-GitHub-Permissions header is a comma separated list of the permissions that are required to use the endpoint. Occasionally, you can choose from multiple permission sets. In these cases, multiple comma-separated lists will be separated by a semicolon.
+For example:
+
+X-Accepted-GitHub-Permissions: contents=read means that your GitHub App or fine-grained personal access token needs read access to the contents permission.
+X-Accepted-GitHub-Permissions: pull_requests=write,contents=read means that your GitHub App or fine-grained personal access token needs write access to the pull request permission and read access to the contents permission.
+X-Accepted-GitHub-Permissions: pull_requests=read,contents=read; issues=read,contents=read means that your GitHub App or fine-grained personal access token needs either read access to the pull request permission and read access to the contents permission, or read access to the issues permission and read access to the contents permission.
+
+Problems parsing JSON
+If you send invalid JSON in the request body, you may receive a 400 Bad Request response and a "Problems parsing JSON" error message. You can use a linter or JSON validator to help you identify errors in your JSON.
+Body should be a JSON object
+If the endpoint expects a JSON object and you do not format your request body as a JSON object, you may receive a 400 Bad Request response and a "Body should be a JSON object" error message.
+Invalid request
+If you omit required parameters or you use the wrong type for a parameter, you may receive a 422 Unprocessable Entity response and an "Invalid request" error message. For example, you will get this error if you specify a parameter value as an array but the endpoint is expecting a string. You can refer to the reference documentation for the endpoint to verify that you are using the correct parameter types and that you are including all of the required parameters.
+Validation Failed
+If your request could not be processed, you may receive a 422 Unprocessable Entity response and a "Validation Failed" error message. The response body will include an errors property, which includes a code property to help you diagnose the problem.
+CodeDescriptionmissingA resource does not exist.missing_fieldA parameter that was required was not specified. Review the documentation for the endpoint to see what parameters are required.invalidThe formatting of a parameter is invalid. Review the endpoint documentation for more specific information.already_existsAnother resource has the same value as one of your parameters.  This can happen in resources that must have some unique key (such as label names).unprocessableThe parameters that were provided were invalid.customRefer to the message property to diagnose the error.
+Not a supported version
+You should use the X-GitHub-Api-Version header to specify an API version. For example:
+curl --header "X-GitHub-Api-Version:2022-11-28" https://api.github.com/zen
+
+If you specify a version that does not exist, you will receive a 400 Bad Request error and a message about the version not being supported.
+For more information, see "API Versions."
+User agent required
+Requests without a valid User-Agent header will be rejected. You should use your username or the name of your application for the User-Agent value.
+curl sends a valid User-Agent header by default.
+Other errors
+If you observe an error that is not addressed here, you should refer to the error message that the API gives you. Most error messages will provide a clue about what is wrong and a link to relevant documentation.
+If you observe unexpected failures, you can use githubstatus.com or the GitHub status API to check for incidents affecting the API.
+Further reading
+
+"Best practices for using the REST API"
+"Troubleshooting webhooks"
+"Best practices for creating a GitHub App"
+Some requests that create new data, such as creating a new commit, allow you to provide timezone information when specifying or generating timestamps.
+Note that these rules apply only to data passed to the API, not to data returned by the API. Timestamps returned by the API are in UTC time, ISO 8601 format.
+Determining the timezone for a request
+To determine timezone information for applicable API calls, we apply these rules in order of priority:
+
+Explicitly providing an ISO 8601 timestamp with timezone information
+Using the Time-Zone header
+Using the last known timezone for the user
+Defaulting to UTC without other timezone information
+
+Explicitly providing an ISO 8601 timestamp with timezone information
+For API calls that allow for a timestamp to be specified, we use that exact timestamp. These timestamps look something like 2014-02-27T15:05:06+01:00.
+An example of this is the API to manage commits. For more information, see "REST API endpoints for Git commits."
+Using the Time-Zone header
+It is possible to supply a Time-Zone header, which defines a timezone according to the list of names from the Olson database.
+curl -H "Time-Zone: Europe/Amsterdam" -X POST https://api.github.com/repos/github-linguist/linguist/contents/new_file.md
+
+This means that we generate a timestamp for the moment your API call is made, in the timezone this header defines.
+For example, the API to manage contents generates a git commit for each addition or change, and it uses the current time as the timestamp. For more information, see "REST API endpoints for repository contents." The Time-Zone header will determine the timezone used for generating that current timestamp.
+Using the last known timezone for the user
+If no Time-Zone header is specified and you make an authenticated call to the API, we use the last known timezone for the authenticated user. The last known timezone is updated whenever you browse the GitHub website.
+Defaulting to UTC without other timezone information
+If the steps above don't result in any information, we use UTC as the timezone.About cross-origin requests
+A cross-origin request is a request made to a different domain than the one originating the request. For security reasons, most web browsers block cross-origin requests. However, you can use cross-origin resource sharing (CORS) and JSONP callbacks to make cross-origin requests.
+Cross-origin resource sharing (CORS)
+The REST API supports cross-origin resource sharing (CORS) for AJAX requests from any origin. For more information, see the "CORS W3C Recommendation" and the HTML 5 Security Guide
+Here's a sample request sent from a browser hitting
+http://example.com:
+$ curl -I https://api.github.com -H "Origin: http://example.com"
+HTTP/2 302
+Access-Control-Allow-Origin: *
+Access-Control-Expose-Headers: ETag, Link, x-ratelimit-limit, x-ratelimit-remaining, x-ratelimit-reset, X-OAuth-Scopes, X-Accepted-OAuth-Scopes, X-Poll-Interval
+
+This is what the CORS preflight request looks like:
+$ curl -I https://api.github.com -H "Origin: http://example.com" -X OPTIONS
+HTTP/2 204
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Headers: Authorization, Content-Type, If-Match, If-Modified-Since, If-None-Match, If-Unmodified-Since, X-Requested-With
+Access-Control-Allow-Methods: GET, POST, PATCH, PUT, DELETE
+Access-Control-Expose-Headers: ETag, Link, x-ratelimit-limit, x-ratelimit-remaining, x-ratelimit-reset, X-OAuth-Scopes, X-Accepted-OAuth-Scopes, X-Poll-Interval
+Access-Control-Max-Age: 86400
+
+JSON-P callbacks
+You can send a ?callback parameter to any GET call to have the results
+wrapped in a JSON function. This is typically used when browsers want to embed GitHub content in web pages and avoid cross-domain problems. The response includes the same data output as the regular API, plus the relevant HTTP Header information.
+$ curl https://api.github.com?callback=foo
+
+> /**/foo({
+>   "meta": {
+>     "status": 200,
+>     "x-ratelimit-limit": "5000",
+>     "x-ratelimit-remaining": "4966",
+>     "x-ratelimit-reset": "1372700873",
+>     "Link": [ // pagination headers and other links
+>       ["https://api.github.com?page=2", {"rel": "next"}]
+>     ]
+>   },
+>   "data": {
+>     // the data
+>   }
+> })
+
+You can write a JavaScript handler to process the callback. Here's a minimal example you can try:
+<html>
+<head>
+<script type="text/javascript">
+function foo(response) {
+  var meta = response.meta;
+  var data = response.data;
+  console.log(meta);
+  console.log(data);
+}
+
+var script = document.createElement('script');
+script.src = 'https://api.github.com?callback=foo';
+
+document.getElementsByTagName('head')[0].appendChild(script);
+</script>
+</head>
+
+<body>
+  <p>Open up your browser's console.</p>
+</body>
+</html>
+
+All of the headers have the same string value as the HTTP Headers, except Link. Link headers are pre-parsed for you and come through as an array of [url, options] tuples.
+For example, a link that looks like this:
+Link: <url1>; rel="next", <url2>; rel="foo"; bar="baz"
+
+will look like this in the Callback output:
+{
+  "Link": [
+    [
+      "url1",
+      {
+        "rel": "next"
+      }
+    ],
+    [
+      "url2",
+      {
+        "rel": "foo",
+        "bar": "baz"
+      }
+    ]
+  ]
+}
+Issue events are triggered by activity in issues and pull requests and are available in the REST API for Issue events and Timeline events. Each event type specifies whether the event is available in the REST API for issue events or timeline events.
+GitHub's REST API considers every pull request to be an issue, but not every issue is a pull request. For this reason, the Issue Events and Timeline Events endpoints may return both issues and pull requests in the response. Pull requests have a pull_request property in the issue object. Because pull requests are issues, issue and pull request numbers do not overlap in a repository. For example, if you open your first issue in a repository, the number will be 1. If you then open a pull request, the number will be 2. Each event type specifies if the event occurs in pull request, issues, or both.
+Issue event object common properties
+Issue events all have the same object structure, except events that are only available in the REST API for timeline events. Some events also include additional properties that provide more context about the event resources. Refer to the specific event for details about any properties that differ from this object format.
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.
+added_to_project
+The issue or pull request was added to a project (classic). You only see this event in responses when projects (classic) have been enabled in the repository.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsIssuesPull requests
+
+Properties for added_to_project
+
+Note: Project card details are now shown in REST API responses for project-related issue and timeline events. This feature is now available for developers to preview. For details, see the blog post.
+To receive the project_card attribute, projects (classic) must be enabled for a repository, and you must provide a custom media type in the Accept header:
+application/vnd.github.starfox-preview+json
+
+
+
+Warning: The API may change without advance notice during the preview period. Preview features are not supported for production use. If you experience any issues, contact us through the GitHub Support portal.
+
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.project_cardobjectThe project card object.project_idintegerThe unique identifier of the project card.project_urlstringThe REST API URL to retrieve the project card.column_namestringThe name of the column the issue is in.
+assigned
+The issue or pull request was assigned to a user.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsIssuesPull requests
+
+Properties for assigned
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.assigneeobjectThe person assigned to this issue.assignerobjectThe person who performed the assignment for this issue. This field is available in the REST API for issue events but not the REST API for timeline events.
+automatic_base_change_failed
+GitHub unsuccessfully attempted to automatically change the base branch of the pull request.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsPull requests
+
+Properties for automatic_base_change_failed
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.
+automatic_base_change_succeeded
+GitHub successfully attempted to automatically change the base branch of the pull request.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsPull requests
+
+Properties for automatic_base_change_succeeded
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.
+base_ref_changed
+The base reference branch of the pull request changed.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsPull requests
+
+Properties for base_ref_changed
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.
+closed
+The issue or pull request was closed. When the commit_id is present, it identifies the commit that closed the issue using "closes / fixes" syntax. For more information about the syntax, see "Linking a pull request to an issue".
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsIssuesPull requests
+
+Properties for closed
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.
+commented
+A comment was added to the issue or pull request.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsIssuesPull requests
+
+Properties for commented
+This events properties do not use the same structure as the issue event object common properties. The following properties are returned for this event.
+NameTypeDescriptionurlstringThe REST API URL to retrieve the issue comment.html_urlstringThe HTML URL of the issue comment.issue_urlstringThe HTML URL of the issue.idintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.userobjectThe person who commented on the issue.created_atstringThe timestamp indicating when the comment was added.updated_atstringThe timestamp indicating when the comment was updated or created, if the comment is never updated.author_associationstringThe permissions the user has in the issue's repository. For example, the value would be "OWNER" if the owner of repository created a comment.bodystringThe comment body text.eventstringThe event value is "commented".actorobjectThe person who generated the event.
+committed
+A commit was added to the pull request's HEAD branch.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsPull requests
+
+Properties for committed
+This events properties do not use the same structure as the issue event object common properties. The following properties are returned for this event.
+NameTypeDescriptionshastringThe SHA of the commit in the pull request.node_idstringThe Global Node ID of the event.urlstringThe REST API URL to retrieve the commit.html_urlstringThe HTML URL of the commit.authorobjectThe person who authored the commit.committerobjectThe person who committed the commit on behalf of the author.treeobjectThe Git tree of the commit.messagestringThe commit message.parentsarray of objectsA list of parent commits.verificationobjectThe result of verifying the commit's signature. For more information, see "REST API endpoints for Git commits."eventstringThe event value is "committed".
+connected
+The issue or pull request was linked to another issue or pull request. For more information, see "Linking a pull request to an issue".
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsIssuesPull requests
+
+Properties for connected
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.
+convert_to_draft
+The pull request was converted to draft mode.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsPull requests
+
+Properties for convert_to_draft
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.
+converted_note_to_issue
+The issue was created by converting a note in a project (classic) to an issue. You only see this event in responses when projects (classic) have been enabled in the repository.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsIssues
+
+Properties for converted_note_to_issue
+
+Note: Project card details are now shown in REST API responses for project-related issue and timeline events. This feature is now available for developers to preview. For details, see the blog post.
+To receive the project_card attribute, projects (classic) must be enabled for a repository, and you must provide a custom media type in the Accept header:
+application/vnd.github.starfox-preview+json
+
+
+
+Warning: The API may change without advance notice during the preview period. Preview features are not supported for production use. If you experience any issues, contact us through the GitHub Support portal.
+
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.project_cardobjectThe project card object.project_idintegerThe unique identifier of the project card.project_urlstringThe REST API URL to retrieve the project card.column_namestringThe name of the column the issue is in.
+converted_to_discussion
+The issue was closed and converted to a discussion.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsIssues
+
+Properties for converted_to_discussion
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.
+cross-referenced
+The issue or pull request was referenced from another issue or pull request.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsIssuesPull requests
+
+Properties for cross-referenced
+This events properties do not use the same structure as the issue event object common properties. The following properties are returned for this event.
+NameTypeDescriptionactorobjectThe person who generated the event.created_atstringThe timestamp indicating when the cross-reference was added.updated_atstringThe timestamp indicating when the cross-reference was updated or created, if the cross-reference is never updated.sourceobjectThe issue or pull request that added a cross-reference.source[type]stringThis value will always be "issue" because pull requests are of type issue. Only cross-reference events triggered by issues or pull requests are returned in the REST API for timeline events. To determine if the issue that triggered the event is a pull request, you can check if the source[issue][pull_request] object exists.source[issue]objectThe issue object that added the cross-reference.eventstringThe event value is "cross-referenced".
+demilestoned
+The issue or pull request was removed from a milestone.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsIssuesPull requests
+
+Properties for demilestoned
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.milestoneobjectThe milestone object.milestone[title]stringThe title of the milestone.
+deployed
+The pull request was deployed.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsPull requests
+
+Properties for deployed
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.
+deployment_environment_changed
+The pull request deployment environment was changed.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsPull requests
+
+Properties for deployment_environment_changed
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.
+disconnected
+The issue or pull request was unlinked from another issue or pull request. For more information, see "Linking a pull request to an issue".
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsIssuesPull requests
+
+Properties for disconnected
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.
+head_ref_deleted
+The pull request's HEAD branch was deleted.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsPull requests
+
+Properties for head_ref_deleted
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.
+head_ref_restored
+The pull request's HEAD branch was restored to the last known commit.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsPull requests
+
+head_ref_force_pushed
+The pull request's HEAD branch was force pushed.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsPull requests
+
+Properties for head_ref_force_pushed
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.
+labeled
+A label was added to the issue or pull request.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsIssuesPull requests
+
+Properties for labeled
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.labelobjectThe label added or removed from the issuelabel[name]stringThe name of the label.label[color]stringThe hex color code.
+locked
+The issue or pull request was locked.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsIssuesPull requests
+
+Properties for locked
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.lock_reasonstringThe reason an issue or pull request conversation was locked, if one was provided.
+mentioned
+The actor was @mentioned in an issue or pull request body.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsIssuesPull requests
+
+Properties for mentioned
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.
+marked_as_duplicate
+A user with write permissions marked an issue as a duplicate of another issue, or a pull request as a duplicate of another pull request.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsIssuesPull requests
+
+Properties for marked_as_duplicate
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.
+merged
+The pull request was merged. The commit_id attribute is the SHA1 of the HEAD commit that was merged. The commit_repository is always the same as the main repository.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsPull requests
+
+Properties for merged
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.
+milestoned
+The issue or pull request was added to a milestone.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsIssuesPull requests
+
+Properties for milestoned
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.milestoneobjectThe milestone object.milestone[title]stringThe title of the milestone.
+moved_columns_in_project
+The issue or pull request was moved between columns in a project (classic). You only see this event in responses when projects (classic) have been enabled in the repository.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsIssuesPull requests
+
+Properties for moved_columns_in_project
+
+Note: Project card details are now shown in REST API responses for project-related issue and timeline events. This feature is now available for developers to preview. For details, see the blog post.
+To receive the project_card attribute, projects (classic) must be enabled for a repository, and you must provide a custom media type in the Accept header:
+application/vnd.github.starfox-preview+json
+
+
+
+Warning: The API may change without advance notice during the preview period. Preview features are not supported for production use. If you experience any issues, contact us through the GitHub Support portal.
+
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.project_cardobjectThe project card object.project_idintegerThe unique identifier of the project card.project_urlstringThe REST API URL to retrieve the project card.column_namestringThe name of the column the issue is in.previous_column_namestringThe name of the column the issue was moved from.
+pinned
+The issue was pinned.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsIssues
+
+Properties for pinned
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.
+ready_for_review
+A draft pull request was marked as ready for review.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsPull requests
+
+Properties for ready_for_review
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.
+referenced
+The issue was referenced from a commit message. The commit_id attribute is the commit SHA1 of where that happened and the commit_repository is where that commit was pushed.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsIssuesPull requests
+
+Properties for referenced
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.
+removed_from_project
+The issue or pull request was removed from a project (classic). You only see this event in responses when projects (classic) have been enabled in the repository.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsIssuesPull requests
+
+Properties for removed_from_project
+
+Note: Project card details are now shown in REST API responses for project-related issue and timeline events. This feature is now available for developers to preview. For details, see the blog post.
+To receive the project_card attribute, projects (classic) must be enabled for a repository, and you must provide a custom media type in the Accept header:
+application/vnd.github.starfox-preview+json
+
+
+
+Warning: The API may change without advance notice during the preview period. Preview features are not supported for production use. If you experience any issues, contact us through the GitHub Support portal.
+
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.project_cardobjectThe project card object.project_idintegerThe unique identifier of the project card.project_urlstringThe REST API URL to retrieve the project card.column_namestringThe name of the column the issue is in.
+renamed
+The issue or pull request title was changed.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsIssuesPull requests
+
+Properties for renamed
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.renameobjectThe name details.rename[from]stringThe previous name.rename[to]stringThe new name.
+reopened
+The issue or pull request was reopened.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsIssuesPull requests
+
+Properties for reopened
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.
+review_dismissed
+The pull request review was dismissed.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsPull requests
+
+Properties for review_dismissed
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.dismissed_reviewobjectThe information for the dismissed review.dismissed_review[state]stringThe state the pull request was in when it was dismissed. Can be one of: commented, approved, or changes_requested.dismissed_review[review_id]stringThe unique identifier of the pull request's review.dismissed_review[dismissal_message]stringThe message the user included when dismissing the review.dismissed_review[dismissal_commit_id]stringThe unique identifier of the commit that dismissed the review if one exists.
+review_requested
+A pull request review was requested.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsPull requests
+
+Properties for review_requested
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.requested_reviewerobjectThe person requested to review the pull request.review_requesterobjectThe person who requested a review.
+review_request_removed
+A pull request review request was removed.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsPull requests
+
+Properties for review_request_removed
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.requested_reviewerobjectThe person requested to review the pull request.review_requesterobjectThe person who requested a review.
+reviewed
+The pull request was reviewed.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsPull requests
+
+Properties for reviewed
+This events properties do not use the same structure as the issue event object common properties. The following properties are returned for this event.
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.userobjectThe person who commented on the issue.bodystringThe review summary text.commit_idstringThe SHA of the latest commit in the pull request at the time of the review.submitted_atstringThe timestamp indicating when the review was submitted.statestringThe state of the submitted review. Can be one of: commented, changes_requested, approved or dismissed.html_urlstringThe HTML URL of the review.pull_request_urlstringThe REST API URL to retrieve the pull request.author_associationstringThe permissions the user has in the issue's repository. For example, the value would be "OWNER" if the owner of repository created a comment._linksobjectThe html_url and pull_request_url.eventstringThe event value is "reviewed".
+subscribed
+Someone subscribed to receive notifications for an issue or pull request.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsIssuesPull requests
+
+Properties for subscribed
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.
+transferred
+The issue was transferred to another repository.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsIssues
+
+Properties for transferred
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.
+unassigned
+A user was unassigned from the issue.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsIssuesPull requests
+
+Properties for unassigned
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.assigneeobjectThe person unassigned from this issue.assignerobjectThe person who performed the unassignment for this issue. This field is available in the REST API for issue events but not the REST API for timeline events.
+unlabeled
+A label was removed from the issue.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsIssuesPull requests
+
+Properties for unlabeled
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.labelobjectThe label added or removed from the issuelabel[name]stringThe name of the label.label[color]stringThe hex color code.
+unlocked
+The issue was unlocked.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsIssuesPull requests
+
+Properties for unlocked
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.lock_reasonstringThe reason an issue or pull request conversation was locked, if one was provided.
+unmarked_as_duplicate
+An issue that a user had previously marked as a duplicate of another issue is no longer considered a duplicate, or a pull request that a user had previously marked as a duplicate of another pull request is no longer considered a duplicate.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsIssuesPull requests
+
+Properties for unmarked_as_duplicate
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.
+unpinned
+The issue was unpinned.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsIssues
+
+Properties for unpinned
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.
+unsubscribed
+Someone unsubscribed from receiving notifications for an issue or pull request.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsIssuesPull requests
+
+Properties for unsubscribed
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.
+user_blocked
+An organization owner blocked a user from the organization. This was done through one of the blocked user's comments on the issue.
+This event is available for the following issue types.
+
+REST API for issue eventsREST API for timeline eventsIssuesPull requests
+
+Properties for user_blocked
+NameTypeDescriptionidintegerThe unique identifier of the event.node_idstringThe Global Node ID of the event.urlstringThe REST API URL for fetching the event.actorobjectThe person who generated the event.eventstringIdentifies the actual type of event that occurred.commit_idstringThe SHA of the commit that referenced this issue.commit_urlstringThe GitHub REST API link to the commit that referenced this issue.created_atstringThe timestamp indicating when the event occurred.The Events API can return different types of events triggered by activity on GitHub. Each event response contains shared properties, but has a unique payload object determined by its event type. The Event object common properties describes the properties shared by all events, and each event type describes the payload properties that are unique to the specific event.
+Event object common properties
+The event objects returned from the Events API endpoints have the same structure.
+Event API attribute nameTypeDescriptionidstringUnique identifier for the event.typestringThe type of event. Events uses PascalCase for the name.actorobjectThe user that triggered the event.actor.idstringThe unique identifier for the actor.actor.loginstringThe username of the actor.actor.display_loginstringThe specific display format of the username.actor.gravatar_idstringThe unique identifier of the Gravatar profile for the actor.actor.urlstringThe REST API URL used to retrieve the user object, which includes additional user information.actor.avatar_urlstringThe URL of the actor's profile image.repoobjectThe repository object where the event occurred.repo.idstringThe unique identifier of the repository.repo.namestringThe name of the repository, which includes the owner and repository name. For example, octocat/hello-world is the name of the hello-world repository owned by the octocat personal account.repo.urlstringThe REST API URL used to retrieve the repository object, which includes additional repository information.payloadobjectThe event payload object is unique to the event type. See the event type below for the event API payload object.publicbooleanWhether the event is visible to all users.created_atstringThe date and time when the event was triggered. It is formatted according to ISO 8601.orgobjectThe organization that was chosen by the actor to perform action that triggers the event.The property appears in the event object only if it is applicable.org.idstringThe unique identifier for the organization.org.loginstringThe name of the organization.org.gravatar_idstringThe unique identifier of the Gravatar profile for the organization.org.urlstringThe REST API URL used to retrieve the organization object, which includes additional organization information.org.avatar_urlstringThe URL of the organization's profile image.
+Example WatchEvent event object
+This example shows the format of the WatchEvent response when using the Events API.
+HTTP/2 200
+Link: <https://api.github.com/resource?page=2>; rel="next",
+      <https://api.github.com/resource?page=5>; rel="last"
+
+[
+  {
+    "type": "WatchEvent",
+    "public": false,
+    "payload": {
+    },
+    "repo": {
+      "id": 3,
+      "name": "octocat/Hello-World",
+      "url": "https://api.github.com/repos/octocat/Hello-World"
+    },
+    "actor": {
+      "id": 1,
+      "login": "octocat",
+      "gravatar_id": "",
+      "avatar_url": "https://github.com/images/error/octocat_happy.gif",
+      "url": "https://api.github.com/users/octocat"
+    },
+    "org": {
+      "id": 1,
+      "login": "github",
+      "gravatar_id": "",
+      "url": "https://api.github.com/orgs/github",
+      "avatar_url": "https://github.com/images/error/octocat_happy.gif"
+    },
+    "created_at": "2011-09-06T17:26:27Z",
+    "id": "12345"
+  }
+]
+
+CommitCommentEvent
+A commit comment is created. The type of activity is specified in the action property of the payload object. For more information, see "REST API endpoints for commit comments."
+The event object includes properties that are common for all events. Each event object includes a payload property and the value is unique to each event type. The payload object for this event is described below.
+Event payload object for CommitCommentEvent
+KeyTypeDescriptionactionstringThe action performed. Can be created.commentobjectThe commit comment resource.
+CreateEvent
+A Git branch or tag is created. For more information, see "REST API endpoints for Git database."
+The event object includes properties that are common for all events. Each event object includes a payload property and the value is unique to each event type. The payload object for this event is described below.
+Event payload object for CreateEvent
+KeyTypeDescriptionrefstringThe git ref resource, or null if ref_type is repository.ref_typestringThe type of Git ref object created in the repository. Can be either branch, tag, or repository.master_branchstringThe name of the repository's default branch (usually main).descriptionstringThe repository's current description.pusher_typestringCan be either user or a deploy key.
+DeleteEvent
+A Git branch or tag is deleted. For more information, see the "REST API endpoints for Git database" REST API.
+The event object includes properties that are common for all events. Each event object includes a payload property and the value is unique to each event type. The payload object for this event is described below.
+Event payload object for DeleteEvent
+KeyTypeDescriptionrefstringThe git ref resource.ref_typestringThe type of Git ref object deleted in the repository. Can be either branch or tag.
+ForkEvent
+A user forks a repository. For more information, see "REST API endpoints for repositories."
+The event object includes properties that are common for all events. Each event object includes a payload property and the value is unique to each event type. The payload object for this event is described below.
+Event payload object for ForkEvent
+KeyTypeDescriptionforkeeobjectThe created repository resource.
+GollumEvent
+A wiki page is created or updated. For more information, see "About wikis."
+The event object includes properties that are common for all events. Each event object includes a payload property and the value is unique to each event type. The payload object for this event is described below.
+Event payload object for GollumEvent
+KeyTypeDescriptionpagesarrayThe pages that were updated.pages[][page_name]stringThe name of the page.pages[][title]stringThe current page title.pages[][action]stringThe action that was performed on the page. Can be created or edited.pages[][sha]stringThe latest commit SHA of the page.pages[][html_url]stringPoints to the HTML wiki page.
+IssueCommentEvent
+Activity related to an issue or pull request comment. The type of activity is specified in the action property of the payload object. For more information, see the "REST API endpoints for issues."
+The event object includes properties that are common for all events. Each event object includes a payload property and the value is unique to each event type. The payload object for this event is described below.
+Event payload object for IssueCommentEvent
+KeyTypeDescriptionactionstringThe action that was performed on the comment. Can be one of created, edited, or deleted.changesobjectThe changes to the comment if the action was edited.changes[body][from]stringThe previous version of the body if the action was edited.issueobjectThe issue the comment belongs to.commentobjectThe comment itself.
+IssuesEvent
+Activity related to an issue. The type of activity is specified in the action property of the payload object. For more information, see the "REST API endpoints for issues."
+The event object includes properties that are common for all events. Each event object includes a payload property and the value is unique to each event type. The payload object for this event is described below.
+Event payload object for IssuesEvent
+KeyTypeDescriptionactionstringThe action that was performed. Can be one of opened, edited, closed, reopened, assigned, unassigned, labeled, or unlabeled.issueobjectThe issue itself.changesobjectThe changes to the issue if the action was edited.changes[title][from]stringThe previous version of the title if the action was edited.changes[body][from]stringThe previous version of the body if the action was edited.assigneeobjectThe optional user who was assigned or unassigned from the issue.labelobjectThe optional label that was added or removed from the issue.
+MemberEvent
+Activity related to repository collaborators. The type of activity is specified in the action property of the payload object. For more information, see "REST API endpoints for collaborators."
+The event object includes properties that are common for all events. Each event object includes a payload property and the value is unique to each event type. The payload object for this event is described below.
+Event payload object for MemberEvent
+KeyTypeDescriptionactionstringThe action that was performed. Can be added to indicate a user accepted an invitation to a repository.memberobjectThe user that was added.changesobjectThe changes to the collaborator permissions if the action was edited.changes[old_permission][from]stringThe previous permissions of the collaborator if the action was edited.
+PublicEvent
+When a private repository is made public.  Without a doubt: the best GitHub event.
+Event payload object for PublicEvent
+This event returns an empty payload object.
+PullRequestEvent
+Activity related to pull requests. The type of activity is specified in the action property of the payload object. For more information, see "REST API endpoints for pull requests."
+The event object includes properties that are common for all events. Each event object includes a payload property and the value is unique to each event type. The payload object for this event is described below.
+Event payload object for PullRequestEvent
+KeyTypeDescriptionactionstringThe action that was performed. Can be one of opened, edited, closed, reopened, assigned, unassigned, review_requested, review_request_removed, labeled, unlabeled, and synchronize.numberintegerThe pull request number.changesobjectThe changes to the comment if the action was edited.changes[title][from]stringThe previous version of the title if the action was edited.changes[body][from]stringThe previous version of the body if the action was edited.pull_requestobjectThe pull request itself.reasonstringThe reason the pull request was removed from a merge queue if the action was dequeued.
+PullRequestReviewEvent
+Activity related to pull request reviews. The type of activity is specified in the action property of the payload object. For more information, see "REST API endpoints for pull requests."
+The event object includes properties that are common for all events. Each event object includes a payload property and the value is unique to each event type. The payload object for this event is described below.
+Event payload object for PullRequestReviewEvent
+KeyTypeDescriptionactionstringThe action that was performed. Can be created.pull_requestobjectThe pull request the review pertains to.reviewobjectThe review that was affected.
+PullRequestReviewCommentEvent
+Activity related to pull request review comments in the pull request's unified diff. The type of activity is specified in the action property of the payload object. For more information, see "REST API endpoints for pull requests."
+The event object includes properties that are common for all events. Each event object includes a payload property and the value is unique to each event type. The payload object for this event is described below.
+Event payload object for PullRequestReviewCommentEvent
+KeyTypeDescriptionactionstringThe action that was performed on the comment. Can be created.changesobjectThe changes to the comment if the action was edited.changes[body][from]stringThe previous version of the body if the action was edited.pull_requestobjectThe pull request the comment belongs to.commentobjectThe comment itself.
+PullRequestReviewThreadEvent
+Activity related to a comment thread on a pull request being marked as resolved or unresolved. The type of activity is specified in the action property of the payload object.
+The event object includes properties that are common for all events. Each event object includes a payload property and the value is unique to each event type. The payload object for this event is described below.
+Event payload object for PullRequestReviewThreadEvent
+KeyTypeDescriptionactionstringThe action that was performed. Can be one of:resolved - A comment thread on a pull request was marked as resolved.unresolved - A previously resolved comment thread on a pull request was marked as unresolved.pull_requestobjectThe pull request the thread pertains to.threadobjectThe thread that was affected.
+PushEvent
+One or more commits are pushed to a repository branch or tag.
+The event object includes properties that are common for all events. Each event object includes a payload property and the value is unique to each event type. The payload object for this event is described below.
+Event payload object for PushEvent
+KeyTypeDescriptionpush_idintegerUnique identifier for the push.sizeintegerThe number of commits in the push.distinct_sizeintegerThe number of distinct commits in the push.refstringThe full git ref that was pushed. Example: refs/heads/main.headstringThe SHA of the most recent commit on ref after the push.beforestringThe SHA of the most recent commit on ref before the push.commitsarrayAn array of commit objects describing the pushed commits. (The array includes a maximum of 20 commits. If necessary, you can use the Commits API to fetch additional commits. This limit is applied to timeline events only and isn't applied to webhook deliveries.)commits[][sha]stringThe SHA of the commit.commits[][message]stringThe commit message.commits[][author]objectThe git author of the commit.commits[][author][name]stringThe git author's name.commits[][author][email]stringThe git author's email address.commits[][url]urlURL that points to the commit API resource.commits[][distinct]booleanWhether this commit is distinct from any that have been pushed before.
+ReleaseEvent
+Activity related to a release. The type of activity is specified in the action property of the payload object. For more information, see the "REST API endpoints for releases and release assets" REST API.
+The event object includes properties that are common for all events. Each event object includes a payload property and the value is unique to each event type. The payload object for this event is described below.
+Event payload object for ReleaseEvent
+KeyTypeDescriptionactionstringThe action that was performed. Can be published.changes[body][from]stringThe previous version of the body if the action was edited.changes[name][from]stringThe previous version of the name if the action was edited.releaseobjectThe release object.
+SponsorshipEvent
+Activity related to a sponsorship listing. The type of activity is specified in the action property of the payload object. For more information, see "About GitHub Sponsors".
+Event payload object for SponsorshipEvent
+KeyTypeDescriptionactionstringThe action that was performed. This can be created.effective_datestringThe pending_cancellation and pending_tier_change event types will include the date the cancellation or tier change will take effect.changes[tier][from]objectThe tier_changed and pending_tier_change will include the original tier before the change or pending change. For more information, see the pending tier change payload.changes[privacy_level][from]stringThe edited event types include the details about the change when someone edits a sponsorship to change the privacy.
+WatchEvent
+When someone stars a repository. The type of activity is specified in the action property of the payload object. For more information, see "REST API endpoints for activity."
+The event object includes properties that are common for all events. Each event object includes a payload property and the value is unique to each event type. The payload object for this event is described below.
+Event payload object for WatchEvent
+KeyTypeDescriptionactionstringThe action that was performed. Currently, can only be started.
