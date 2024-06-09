@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from 'react';
+import axios from 'axios';
 
 interface Option {
   value: string;
@@ -10,6 +11,7 @@ const JobForm: React.FC = () => {
   const [skills, setSkills] = useState('');
   const [experience, setExperience] = useState('');
   const [jobRole, setJobRole] = useState('');
+  const [response, setResponse] = useState<string>('');
 
   const experienceOptions: Option[] = [
     { value: '1', label: '1 year' },
@@ -23,16 +25,26 @@ const JobForm: React.FC = () => {
     // Add more options as needed
   ];
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Handle form submission logic here
-    console.log('Skills:', skills);
-    console.log('Experience:', experience);
-    console.log('Job Role:', jobRole);
+    try {
+      const res = await axios.get('http://localhost:6000/query', {
+        params: {
+          experience,
+          job_role: jobRole,
+          skills: skills.split(',').map(skill => skill.trim()),
+        },
+      });
+      setResponse(res.data.response);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      setResponse('An error occurred while fetching data.');
+    }
   };
 
   return (
-    <div className="flex justify-center items-center mt-[10px] ">
+    <div className='flex flex-row justify-start'>
+      <div className="flex justify-center items-center mt-[10px] ">
         <form onSubmit={handleSubmit}>
         <div>
             <label htmlFor="skills" className='block text-[30px]'>Skills:</label>
@@ -76,6 +88,8 @@ const JobForm: React.FC = () => {
         </div>
         <button type="submit" className=' my-[10px] self-center bg-blue-500 hover:bg-blue-400 text-white font-bold py-2 px-4 border-b-4 border-blue-700 hover:border-blue-500 rounded-[10px]'>Submit</button>
         </form>
+    </div>
+      <div><p>{response}</p></div>
     </div>
   );
 };
