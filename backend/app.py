@@ -253,12 +253,27 @@ class get_auth_type(BaseModel):
     
 class MyData(BaseModel):
     lol: str
-@app.post("/token/verify")
+    
+@app.post("/git_array")
 async def verify(data:MyData ,current_user: str = Depends(verify_token)):
-    return {"message": data.lol, "token": current_user.username}
+  type = "github"
+  token = get_token_by_username_and_type(current_user.username, type)
+  if token is None:
+    return {"status": 0, data: "None"}
+  x=graph_api.main(token, current_user.username)
+  if x["status"] == 0:
+    return {"status": 0, data: "None"}
+  return {"data": x, "token": current_user.username}
   
 
-def get_token_by_username_and_type(db: Session, username: str, type: str):
+import modulo.graph_api as graph_api
+@app.post("/token/verify")
+async def verify(data:MyData ,current_user: str = Depends(verify_token)):
+  graph_api.main(data.lol, current_user.username)
+  return {"message": data.lol, "token": current_user.username}
+  
+
+def get_token_by_username_and_type(username: str, type: str,db: Session = Depends(get_db)):
     user = db.query(User).filter(User.username == username).first()
     if user is None:
         return None
@@ -269,6 +284,16 @@ def get_token_by_username_and_type(db: Session, username: str, type: str):
 @app.post("/token/verify")
 async def verify(data:MyData ,current_user: str = Depends(verify_token)):
     return {"message": data.lol, "token": current_user.username}
+  
+  
+  
+@app.get("/git_login")
+def login(db: Session = Depends(get_db), current_user: str = Depends(verify_token)):
+    client_id = os.getenv("GITHUB_CLIENT_ID")
+    redirect_uri = "http://localhost:8000/git_auth"
+    scope = "repo"  # Request access to user's repositories
+    return RedirectResponse(url=f"https://github.com/login/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}&scope={scope}")
+
   
 @app.get("/git_auth")
 def auth(code: str, db: Session = Depends(get_db), current_user: str = Depends(verify_token)):
@@ -294,9 +319,17 @@ def auth(code: str, db: Session = Depends(get_db), current_user: str = Depends(v
   if not user:
     raise HTTPException(status_code=404, detail="User not found")
 
-  # Store the access token and GitHub username
-  auth_token = AuthToken(token=token, usrname=github_username, type='github', user_id=user.id)
-  db.add(auth_token)
+  # Check if AuthToken already exists
+  auth_token = db.query(AuthToken).filter(AuthToken.user_id == user.id, AuthToken.type == 'github').first()
+  if auth_token:
+    # Update the existing AuthToken
+    auth_token.token = token
+    auth_token.username = github_username
+  else:
+    # Create a new AuthToken
+    auth_token = AuthToken(token=token, username=github_username, type='github', user_id=user.id)
+    db.add(auth_token)
+
   db.commit()
 
   return {"message": "Authentication successful"}
