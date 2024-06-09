@@ -1,4 +1,36 @@
-const login = () => {
+"use client";
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+
+const Login = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const router = useRouter();
+
+  const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const response = await fetch('http://127.0.0.1:8000/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        username: email,
+        password: password,
+      }),
+    });
+    let token, data;
+    if (response.ok) {
+      data = await response.json();
+      token = data.access_token;
+      localStorage.setItem('token', token);
+      router.push('/dashboard');
+    } else {
+      alert('Login failed')
+    }
+  };
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-zinc-900 ">
       <div className="bg-zinc-800 text-white rounded-lg p-8 shadow-lg w-full max-w-md border border-blue-500">
@@ -36,7 +68,7 @@ const login = () => {
               <br />
               Welcome Back...
             </h2>
-            <form>
+            <form onSubmit={handleLogin}>
               <div className="mb-4">
                 <label className="block text-zinc-400 mb-2" htmlFor="email">
                   Your email address
@@ -44,9 +76,11 @@ const login = () => {
                 <div className="flex items-center border border-zinc-600 rounded-lg overflow-hidden">
                   <input
                     className="bg-zinc-800 text-white w-full p-2 outline-none"
-                    type="email"
+                    type="text"
                     id="email"
                     placeholder="Your email address"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                   />
                   <div className="p-2">
                     <svg
@@ -76,6 +110,8 @@ const login = () => {
                     type="password"
                     id="password"
                     placeholder="Your Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                   />
                   <div className="p-2">
                     <svg
@@ -95,7 +131,10 @@ const login = () => {
                   </div>
                 </div>
               </div>
-              <button className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition duration-200">
+              <button
+                type="submit"
+                className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition duration-200"
+              >
                 Login
               </button>
             </form>
@@ -114,4 +153,4 @@ const login = () => {
   );
 };
 
-export default login;
+export default Login;

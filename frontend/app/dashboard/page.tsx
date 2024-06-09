@@ -3,6 +3,7 @@ import Tasks from "../components/Tasks";
 import Attendance from "../components/Attendance";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import Plugin from "../components/Plugin";
 
 const Dashboard = () => {
   return (
@@ -14,9 +15,12 @@ const Dashboard = () => {
       }}
     >
       <Navbar />
-      <div className="flex flex-row justify-center items-center">
+      <div className="flex flex-col justify-center items-center m-5">
+        <div className="flex flex-row">
         <Tasks />
         <Attendance />
+        </div>
+        <Plugin/>
       </div>
       <Footer />
     </div>
