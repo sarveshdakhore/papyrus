@@ -13,21 +13,26 @@ class graph_values:
             'Accept': 'application/vnd.github.v3+json'
         }
         # Fetch Pull Requests
-        self.pr_url = f'https://api.github.com/search/issues?q=type:pr+author:{self.USERNAME}'
-        self.pr_response = requests.get(self.pr_url, headers=self.HEADERS)
-        self.pull_requests = self.pr_response.json()
-
-        # Fetch Issues
-        self.issue_url = f'https://api.github.com/search/issues?q=type:issue+author:{self.USERNAME}'
-        self.issue_response = requests.get(self.issue_url, headers=self.HEADERS)
-        self.issues = self.issue_response.json()
-
-        # Fetch Commits
-        self.commit_url = f'https://api.github.com/search/commits?q=author:{self.USERNAME}'
-        self.commit_headers = self.HEADERS.copy()
-        self.commit_headers['Accept'] = 'application/vnd.github.cloak-preview+json'
-        self.commit_response = requests.get(self.commit_url, headers=self.commit_headers)
-        self.commits = self.commit_response.json()
+        self.status = 1;
+        try:
+            self.pr_url = f'https://api.github.com/search/issues?q=type:pr+author:{self.USERNAME}'
+            self.pr_response = requests.get(self.pr_url, headers=self.HEADERS)
+            self.pull_requests = self.pr_response.json()
+    
+            # Fetch Issues
+            self.issue_url = f'https://api.github.com/search/issues?q=type:issue+author:{self.USERNAME}'
+            self.issue_response = requests.get(self.issue_url, headers=self.HEADERS)
+            self.issues = self.issue_response.json()
+    
+            # Fetch Commits
+            self.commit_url = f'https://api.github.com/search/commits?q=author:{self.USERNAME}'
+            self.commit_headers = self.HEADERS.copy()
+            self.commit_headers['Accept'] = 'application/vnd.github.cloak-preview+json'
+            self.commit_response = requests.get(self.commit_url, headers=self.commit_headers)
+            self.commits = self.commit_response.json()
+        except:
+            self.status = 0;
+        
     # Example date string
     # date_str = "2024-02-01T23:25:18.000+05:30"
 
@@ -76,7 +81,7 @@ class graph_values:
 
             # Output the results
         return(last_30_days)
-    status = 1
+    
     def return_values(self):
         self.commits_arr = self.make_arr_commit(self.commits)
         self.pull_requests_arr = self.make_arr(self.pull_requests)
