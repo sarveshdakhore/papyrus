@@ -18,23 +18,21 @@ export default function Widget() {
         <div className="container mx-auto flex flex-col md:flex-row items-center py-13 h-[75vh] mx  -10">
           <div className="md:w-1/2 space-y-6 p-[1.75rem]">
             <h1 className="text-4xl font-bold">
-              MUSE: Inspire With Summaries: Summarizes In A Way That Inspires
-              Further Learning.
+              Papyrus: Unveiling Insights, Simplifying Complexity: 
+              Your go-to platform for effortless knowledge management and seamless collaboration.
             </h1>
             <ul className="list-disc list-inside space-y-2">
               <li>
-                The AI tool summarizes the video into bite-sized categories or
-                chapters.
+                Welcome to the future of streamlined collaboration and organizational efficiency.
               </li>
               <li>
-                You can directly add a YouTube URL and click 'submit' to
-                generate a short and informative summary.
+                Simplify routine tasks such as applying for leave and sending emails.
               </li>
-              <li>Supports Multiple Languages</li>
-              <li>High accuracy</li>
+              <li>Monitor and manage the team's workflow effectively.</li>
+              <li>Introducing our cutting-edge resume ranking feature, delivering tailored candidate evaluations for perfect organizational fits.</li>
             </ul>
             <button className="bg-blue-600 text-white px-6 py-3 rounded-lg">
-              Try MUSE for free
+              Try Papyrus for free
             </button>
           </div>
           <div className="md:w-1/2 mt-8 md:mt-0 flex justify-center">
