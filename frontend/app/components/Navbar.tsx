@@ -2,7 +2,7 @@ const Navbar = () => {
   return (
     <nav className="text-white p-4 bg-[#0101272d] px-6">
           <div className="container mx-auto flex justify-between items-center">
-            <div className="text-lg font-bold">LOGO</div>
+            <div className="text-lg font-bold"><img src="./logo1.png" width={50} height={50}/><img src="./logo2.png" width={50} height={50}/></div>
             <ul className="flex space-x-4 ml-16">
               <li><a href="#" className="hover:text-zinc-400">Lorem</a></li>
               <li><a href="#" className="hover:text-zinc-400">Ipsum</a></li>

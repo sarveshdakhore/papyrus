@@ -38,7 +38,7 @@ export default function Widget() {
             </button>
           </div>
           <div className="md:w-1/2 mt-8 md:mt-0 flex justify-center">
-            <Image src={landing} height={400} width={400} alt="landing" />
+            <Image src={landing} height={500} width={500} alt="landing" />
           </div>
         </div>
       </div>
