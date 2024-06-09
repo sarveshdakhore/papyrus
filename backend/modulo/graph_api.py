@@ -91,11 +91,19 @@ class graph_values:
 
 def main(token,usrname):
     values = graph_values(token,usrname)
-    values.return_values()
-    return {
-        "status":1,
-        "commits": values.commits_arr,
-        "pull_requests": values.pull_requests_arr,
-        "issues": values.issue_arr
-    }
+    if (values.status == 0):
+        return {
+            "status":0,
+            "commits": [],
+            "pull_requests": [],
+            "issues": []
+        }
+    else:
+      values.return_values()
+      return {
+          "status":1,
+          "commits": values.commits_arr,
+          "pull_requests": values.pull_requests_arr,
+          "issues": values.issue_arr
+      }
 
