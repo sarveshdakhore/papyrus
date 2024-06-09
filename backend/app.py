@@ -296,7 +296,7 @@ def login():
 
   
 @app.get("/git_auth")
-def auth(code: str, db: Session = Depends(get_db), current_user: str = Depends(verify_token)):
+def auth(code: str, db: Session = Depends(get_db)):
   client_id = os.getenv("GITHUB_CLIENT_ID")
   client_secret = os.getenv("GITHUB_CLIENT_SECRET")
   data = {
@@ -315,7 +315,7 @@ def auth(code: str, db: Session = Depends(get_db), current_user: str = Depends(v
   github_username = response.json()['login']
 
   # Get the user from your database using JWT token
-  user = db.query(User).filter(User.username == current_user.username).first()
+  user = db.query(User).filter(User.username == "sarveshdakhore").first()
   if not user:
     raise HTTPException(status_code=404, detail="User not found")
 
