@@ -288,11 +288,12 @@ async def verify(data:MyData ,current_user: str = Depends(verify_token)):
   
   
 @app.get("/git_login")
-def login(db: Session = Depends(get_db), current_user: str = Depends(verify_token)):
+def login():
     client_id = os.getenv("GITHUB_CLIENT_ID")
     redirect_uri = "http://localhost:8000/git_auth"
     scope = "repo"  # Request access to user's repositories
-    return {"url": f"https://github.com/login/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}&scope={scope}"}
+    return RedirectResponse(url=f"https://github.com/login/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}&scope={scope}")
+
   
 @app.get("/git_auth")
 def auth(code: str, db: Session = Depends(get_db), current_user: str = Depends(verify_token)):
