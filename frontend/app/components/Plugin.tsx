@@ -1,9 +1,33 @@
+"use client";
 import React from "react";
 
 const Plugin = () => {
+  const handlegithub = async () => {
+    const token = localStorage.getItem("token");
+    console.log(token);
+    const response = await fetch("http://127.0.0.1:8000/git_login", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+        "Accept": "*/*",
+        "User-Agent": "Thunder Client (https://www.thunderclient.com)",
+      },
+      redirect: "manual",
+    });
+
+    if (response.type === "opaqueredirect") {
+      window.location.href = response.url;
+    } else {
+      console.error("Failed to login with GitHub");
+    }
+  };
   return (
     <div className="flex flex-col items-center justify-center min-h-screenp-4">
-      <div className="text-white rounded-xl p-6 shadow-lg w-full max-w-md border border-1 border-white" style={{ backgroundColor: 'rgba(53, 64, 85, 0.2)' }}>
+      <div
+        className="text-white rounded-xl p-6 shadow-lg w-full max-w-md border border-1 border-white"
+        style={{ backgroundColor: "rgba(53, 64, 85, 0.2)" }}
+      >
         <div className="flex items-center mb-6">
           <img
             src="https://placehold.co/40x40"
@@ -51,7 +75,7 @@ const Plugin = () => {
                 alt="LinkedIn icon"
                 className="mr-4"
               />
-              <span className="text-lg font-semibold">Linked In</span>
+              <span className="text-lg font-semibold">LinkedIn</span>
             </div>
             <div className="flex items-center space-x-4">
               <div className="flex items-center">
@@ -101,7 +125,10 @@ const Plugin = () => {
                 />
                 <span>7.2k</span>
               </div>
-              <button className="bg-gradient-to-r from-purple-400 to-pink-500 text-white px-4 py-2 rounded-full">
+              <button
+                className="bg-gradient-to-r from-purple-400 to-pink-500 text-white px-4 py-2 rounded-full"
+                onClick={handlegithub}
+              >
                 Connect
               </button>
             </div>
