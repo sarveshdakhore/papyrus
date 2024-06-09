@@ -4,9 +4,9 @@ const Navbar = () => {
           <div className="container mx-auto flex justify-between items-center">
             <div className="text-lg font-bold">LOGO</div>
             <ul className="flex space-x-4 ml-16">
-              <li><a href="#" className="hover:text-zinc-400">Lorem</a></li>
-              <li><a href="#" className="hover:text-zinc-400">Ipsum</a></li>
-              <li><a href="#" className="hover:text-zinc-400">Dolor</a></li>
+              <li><a href="#" className="hover:text-zinc-400">Dashboard</a></li>
+              <li><a href="#" className="hover:text-zinc-400">Resume Ranking</a></li>
+              <li><a href="#" className="hover:text-zinc-400">Git Tracking</a></li>
               <li><a href="#" className="hover:text-zinc-400">Amet</a></li>
             </ul>
             <div className="flex space-x-4 items-center">
