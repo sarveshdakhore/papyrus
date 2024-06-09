@@ -76,20 +76,21 @@ class graph_values:
 
             # Output the results
         return(last_30_days)
-    
+    status = 1
     def return_values(self):
         self.commits_arr = self.make_arr_commit(self.commits)
         self.pull_requests_arr = self.make_arr(self.pull_requests)
         self.issue_arr = self.make_arr(self.issues)
+        self.status = 1
 
 
-def main():
-    values = graph_values('','sarveshdakhore')
+def main(token,usrname):
+    values = graph_values(token,usrname)
     values.return_values()
-    print(values.commits_arr)
-    print(values.pull_requests_arr)
-    print(values.issue_arr)
+    return {
+        "status":1,
+        "commits": values.commits_arr,
+        "pull_requests": values.pull_requests_arr,
+        "issues": values.issue_arr
+    }
 
-
-if __name__ == "__main__":
-    main()
