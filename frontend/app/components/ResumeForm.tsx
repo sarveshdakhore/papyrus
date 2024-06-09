@@ -32,14 +32,14 @@ const JobForm: React.FC = () => {
   };
 
   return (
-    <div className="flex justify-center items-center mt-[100px] ">
+    <div className="flex justify-center items-center mt-[10px] ">
         <form onSubmit={handleSubmit}>
         <div>
-            <label htmlFor="skills" className='block'>Skills:</label>
+            <label htmlFor="skills" className='block text-[30px]'>Skills:</label>
             <input
             type="text"
             id="skills"
-            className='block text-black'
+            className='block text-black w-full p-4  bg-[#5555e228] rounded-lg border-2 border-blue-500'
             value={skills}
             onChange={(e) => setSkills(e.target.value)}
             />
@@ -48,7 +48,7 @@ const JobForm: React.FC = () => {
             <label htmlFor="experience" className='block'>Experience:</label>
             <select
             id="experience"
-            className='block text-black'
+            className='block text-white w-full p-4  bg-[#5555e278] rounded-lg border-2 border-blue-500'
             value={experience}
             onChange={(e) => setExperience(e.target.value)}
             >
@@ -64,7 +64,7 @@ const JobForm: React.FC = () => {
             <select
             id="jobRole"
             value={jobRole}
-            className='block text-black'
+            className='block text-white w-full p-4 bg-[#5555e278] rounded-lg border-2 border-blue-500'
             onChange={(e) => setJobRole(e.target.value)}
             >
             {jobRoleOptions.map((option) => (
@@ -74,7 +74,7 @@ const JobForm: React.FC = () => {
             ))}
             </select>
         </div>
-        <button type="submit" className='bg-blue-500 hover:bg-blue-400 text-white font-bold py-2 px-4 border-b-4 border-blue-700 hover:border-blue-500 rounded-[10px]'>Submit</button>
+        <button type="submit" className=' my-[10px] self-center bg-blue-500 hover:bg-blue-400 text-white font-bold py-2 px-4 border-b-4 border-blue-700 hover:border-blue-500 rounded-[10px]'>Submit</button>
         </form>
     </div>
   );
