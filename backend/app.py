@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from fastapi import Body
 from datetime import datetime, timedelta, timezone
+from pydantic import BaseModel
 
 DATABASE_URL = "sqlite:///./papyrus.db"
 
@@ -23,6 +24,13 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI()
 SECRET_KEY = "hhdjkh-cdhjvcn6456mc-cnb"  # Replace with your actual secret key
 ALGORITHM = "HS256"  # or "RS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 59
+
+class TokenData(BaseModel):
+    username: Optional[str] = None
+
+
+
 
 app.add_middleware(
   CORSMiddleware,
@@ -92,7 +100,21 @@ def get_user_teams_in_company(username: str, company_id: int, db: Session):
 
 
 
-
+def verify_token(token: str = Depends(oauth2_scheme)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+        token_data = TokenData(username=username)
+    except JWTError:
+        raise credentials_exception
+    return token_data
 
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
@@ -215,3 +237,9 @@ async def read_user_teams_in_company(username: str, company_id: int, db: Session
   if teams is None:
     raise HTTPException(status_code=404, detail="User or company not found")
   return teams
+
+class MyData(BaseModel):
+    lol: str
+@app.post("/token/verify")
+async def verify(data:MyData ,current_user: str = Depends(verify_token)):
+    return {"message": data.lol, "token": current_user.username}

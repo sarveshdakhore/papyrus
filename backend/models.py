@@ -34,6 +34,8 @@ class Team(Base):
   company_id = Column(Integer, ForeignKey('companies.id'))
   company = relationship("Company", back_populates="teams")
   user_roles = relationship("User_roles", back_populates="team")
+  tasks = relationship("Task", back_populates="team")  # Add this line
+
   
 class User_roles(Base):
   __tablename__ = 'user_roles'
