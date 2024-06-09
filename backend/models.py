@@ -14,8 +14,9 @@ class User(Base):
   email = Column(String, unique=True, index=True)
   hashed_password = Column(String)
   disabled = Column(Boolean, default=False)
-  roles = relationship("User_roles", back_populates="user") 
-  
+  roles = relationship("User_roles", back_populates="user")
+  auth_tokens = relationship("AuthToken", back_populates="user")  # Add this line
+  leave_balance = relationship("LeaveBalance", uselist=False, back_populates="user")
   
 
 class Company(Base):
@@ -58,3 +59,35 @@ class Task(Base):
   assigned_from = Column(Integer, ForeignKey('users.id'))
   team_id = Column(Integer, ForeignKey('teams.id'))
   team = relationship("Team", back_populates="tasks")
+  
+class AuthToken(Base):
+  __tablename__ = 'auth_tokens'
+  id = Column(Integer, primary_key=True, index=True)
+  usrname = Column(String, index=True)
+  token = Column(String, index=True)
+  type = Column(String, index=True)
+  user_id = Column(Integer, ForeignKey('users.id'))
+  user = relationship("User", back_populates="auth_tokens")
+  
+  def __init__(self, token, usrname, type, user_id):
+    self.token = token
+    self.usrname = usrname
+    self.type = type
+    self.user_id = user_id
+    
+class LeaveBalance(Base):
+  __tablename__ = 'leave_balances'
+  id = Column(Integer, primary_key=True, index=True)
+  user_id = Column(Integer, ForeignKey('users.id'))
+  sick_leave = Column(Integer, default=0)
+  casual_leave = Column(Integer, default=0)
+  unpaid_leave = Column(Integer, default=0)
+  half_leave = Column(Integer, default=0)
+  user = relationship("User", back_populates="leave_balance")
+
+  def __init__(self, user_id, sick_leave=0, casual_leave=0, unpaid_leave=0, half_leave=0):
+    self.user_id = user_id
+    self.sick_leave = sick_leave
+    self.casual_leave = casual_leave
+    self.unpaid_leave = unpaid_leave
+    self.half_leave = half_leave

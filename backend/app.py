@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException, status
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -13,6 +13,11 @@ from sqlalchemy import and_
 from fastapi import Body
 from datetime import datetime, timedelta, timezone
 from pydantic import BaseModel
+import os
+import requests
+from dotenv import load_dotenv
+load_dotenv()
+print(os.getenv("GITHUB_CLIENT_ID"))
 
 DATABASE_URL = "sqlite:///./papyrus.db"
 
@@ -238,8 +243,60 @@ async def read_user_teams_in_company(username: str, company_id: int, db: Session
     raise HTTPException(status_code=404, detail="User or company not found")
   return teams
 
+class graph_api(BaseModel):
+    auth: str
+    username: str
+    type: str
+
+class get_auth_type(BaseModel):
+    type: str
+    
 class MyData(BaseModel):
     lol: str
 @app.post("/token/verify")
 async def verify(data:MyData ,current_user: str = Depends(verify_token)):
     return {"message": data.lol, "token": current_user.username}
+  
+
+def get_token_by_username_and_type(db: Session, username: str, type: str):
+    user = db.query(User).filter(User.username == username).first()
+    if user is None:
+        return None
+    token = db.query(AuthToken).filter(AuthToken.user_id == user.id, AuthToken.type == type).first()
+    return token.token if token else None
+
+
+@app.post("/token/verify")
+async def verify(data:MyData ,current_user: str = Depends(verify_token)):
+    return {"message": data.lol, "token": current_user.username}
+  
+@app.get("/git_auth")
+def auth(code: str, db: Session = Depends(get_db), current_user: str = Depends(verify_token)):
+  client_id = os.getenv("GITHUB_CLIENT_ID")
+  client_secret = os.getenv("GITHUB_CLIENT_SECRET")
+  data = {
+    "client_id": client_id,
+    "client_secret": client_secret,
+    "code": code
+  }
+  response = requests.post("https://github.com/login/oauth/access_token", data=data, headers={"Accept": "application/json"})
+  response.raise_for_status()
+  token = response.json()['access_token']
+
+  # Get the user's GitHub
+  headers = {"Authorization": f"token {token}"}
+  response = requests.get("https://api.github.com/user", headers=headers)
+  response.raise_for_status()
+  github_username = response.json()['login']
+
+  # Get the user from your database using JWT token
+  user = db.query(User).filter(User.username == current_user.username).first()
+  if not user:
+    raise HTTPException(status_code=404, detail="User not found")
+
+  # Store the access token and GitHub username
+  auth_token = AuthToken(token=token, usrname=github_username, type='github', user_id=user.id)
+  db.add(auth_token)
+  db.commit()
+
+  return {"message": "Authentication successful"}
