@@ -84,7 +84,7 @@ class graph_values:
 
 
 def main():
-    values = graph_values('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','sarveshdakhore')
+    values = graph_values('','sarveshdakhore')
     values.return_values()
     print(values.commits_arr)
     print(values.pull_requests_arr)
